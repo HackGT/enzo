@@ -2,7 +2,7 @@
 mod utils;
 mod commands;
 
-use commands::{Exec, init};
+use commands::*;
 use structopt::StructOpt;
 
 macro_rules! gen_subcmd_e {
@@ -31,7 +31,7 @@ struct Opt {
     subcmd: SubCmd,
 }
 
-gen_subcmd_e!(SubCmd; Init(init::Opt));
+gen_subcmd_e!(SubCmd; Init(init::Opt), New(new::Opt));
 
 fn main() {
     let opts = Opt::from_args();
