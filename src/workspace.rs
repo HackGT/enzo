@@ -4,7 +4,7 @@ use read_input::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct WorkspaceData {
     path: PathBuf,
     projects: Vec<String>,
@@ -16,7 +16,7 @@ impl WorkspaceData {
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct WorkspaceName(String);
 
 pub fn read_from_stdin() -> Result<(WorkspaceName, WorkspaceData), FatalError> {
