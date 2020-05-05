@@ -5,7 +5,7 @@ A good analogy is Makefile and using make
 **flow**
 A file that describes the actions that a developer needs to perform to configure a repo
 
-**enzo.yaml**
+**flow.yaml**
 A file that contains various flows!
 
 // TODO: document the syntax for describing flows
@@ -46,6 +46,7 @@ Prints out a list of tasks (with completed status) contained in the enzo.yaml fi
 
 Let's think about an example flow to figure out what keys, values, and other stuff you can support
 
+**Iteration #1**
 Example flow file for setting up piranha
 ```yaml
 config:
@@ -88,3 +89,53 @@ tasks:
       - sub task
       - sub task
 ```
+
+**Iteration #2**
+```yaml
+config:
+  - section 1:
+    - question:
+        prompt: <the prompt for the question>
+        hints:
+          - hints to answer the question correctly
+        response:
+          # what you want to do with the response
+          store in: VAR_NAME
+    - run:
+        - bash
+        - commands
+        - you can also reference VAR_NAME as $VAR_NAME
+    - env:
+        # specify key-value pairs for your env file
+        name: .env
+        data:
+          KEY: $VAR_NAME
+          KEY1: some value
+  - section 2
+  - section 3
+
+# what should developers do?
+tasks:
+  - task 1
+  - task 2:
+      - notes: notes in here
+      - resources: resources in here
+      - sub-task 1
+      - sub-task 2
+  - task 3
+```
+
+## Config file
+
+```
+workspace = ~/Documents/projects/hackgt
+remote = https://www.github.com
+default_org = HackGT
+
+alias est = HackGT/event-site
+```
+
+// need to write a parser for
+* getting the key value pairs
+* parsing the values of each key
+
