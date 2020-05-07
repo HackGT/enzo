@@ -1,5 +1,4 @@
-use crate::utils::{get_home_dir, FatalError};
-use ansi_term::Color;
+use crate::utils::{fatal_error::FatalError, get_home_dir, query};
 use read_input::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -29,6 +28,7 @@ pub fn read_from_stdin() -> Result<(WorkspaceName, WorkspaceData), FatalError> {
         ext = input::<String>()
             .msg(query("Path to workspace", Some("$HOME"), Some("$HOME/")))
             .get();
+        println!("{:#?}", path);
         path.push(ext);
         if !path.exists() {
             println!("Hmmm. looks like that wasn't a valid path. Try again\n");
@@ -43,22 +43,4 @@ pub fn read_from_stdin() -> Result<(WorkspaceName, WorkspaceData), FatalError> {
     let data = WorkspaceData::new(path, vec![]);
 
     Ok((WorkspaceName(name), data))
-}
-
-fn query(question: &str, default: Option<&str>, pre: Option<&str>) -> String {
-    format!(
-        "{} {} {}\n> {}",
-        Color::Green.bold().paint("?"),
-        Color::White.bold().paint(question),
-        if let Some(default) = default {
-            format!("(default {})", Color::White.dimmed().paint(default))
-        } else {
-            String::new()
-        },
-        if let Some(pre) = pre {
-            format!("{}", Color::Yellow.paint(pre))
-        } else {
-            String::new()
-        }
-    )
 }

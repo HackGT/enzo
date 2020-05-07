@@ -1,8 +1,6 @@
 use ansi_term::Color::Red;
-use dirs::home_dir;
 use std::error::Error;
 use std::fmt;
-use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct FatalError {
@@ -10,7 +8,7 @@ pub struct FatalError {
 }
 
 impl FatalError {
-    fn new(msg: &str) -> FatalError {
+    pub fn new(msg: &str) -> FatalError {
         FatalError {
             msg: msg.to_string(),
         }
@@ -25,9 +23,3 @@ impl fmt::Display for FatalError {
 
 impl Error for FatalError {}
 
-pub fn get_home_dir() -> Result<PathBuf, FatalError> {
-    match home_dir() {
-        Some(path) => Ok(path),
-        None => Err(FatalError::new("Couldn't access the home directory")),
-    }
-}

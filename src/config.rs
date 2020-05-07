@@ -1,4 +1,4 @@
-use crate::utils::get_home_dir;
+use crate::utils::{fatal_error::FatalError, get_home_dir};
 use crate::workspace::{self, WorkspaceData, WorkspaceName};
 use ansi_term::Color;
 use serde::{Deserialize, Serialize};
@@ -64,17 +64,26 @@ impl Error for ConfigError {}
 pub fn read_config(name: &str) -> Result<Config, Box<dyn Error>> {
     let mut config_file_path = get_home_dir()?;
     config_file_path.push(name);
+    if !config_file_path.exists() {
+        print_warning(format!("Couldn't find {}", Color::Blue.bold().paint(name)));
+        create_config_file(&config_file_path)?;
+    }
+
     let mut file = match File::open(&config_file_path) {
         Ok(handle) => handle,
         Err(_) => {
-            print_warning(format!("Couldn't find {}", Color::Blue.bold().paint(name)));
-            create_config_file(&config_file_path)?
+            // critical error, because the config file should've been made by now
+            return Err(Box::new(FatalError::new(
+                "Could not find .enzo.config.yaml file",
+            )));
         }
     };
 
     let mut buffer = String::new();
     file.read_to_string(&mut buffer)?;
+
     let config = serde_yaml::from_str(buffer.as_str())?;
+
     Ok(config)
 }
 
@@ -90,12 +99,15 @@ fn create_config_file(path: &PathBuf) -> Result<File, Box<dyn Error>> {
     let (name, data) = workspace::read_from_stdin()?;
     let mut workspaces = HashMap::new();
     workspaces.insert(name.clone(), data);
+
     let config = Config::new(name, workspaces);
+
     let s = serde_yaml::to_string(&config)?;
     if let Err(_) = file.write(s.as_bytes()) {
         return Err(Box::new(ConfigError::new(
             "Could not write config info to the configuration file",
         )));
     }
+
     Ok(file)
 }
