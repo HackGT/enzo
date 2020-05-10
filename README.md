@@ -141,3 +141,16 @@ alias est = HackGT/event-site
 * getting the key value pairs
 * parsing the values of each key
 
+
+## the remake of enzo
+
+```
+enzo clone <url/relative_path> <destination> [--path]
+```
+Clones a git repo from the url/relative path to the destination. By default, the destination is the name of a workspace, or a path that starts from a workspace name. If the --path flag is passed, then enzo will not resolve the workspace name and will treat it like a usual file path.
+
+```
+enzo new <url/relative_path> <destination> [--path]
+```
+Creates a new git repo in destination by first cloning the repo, and then deleting the `.git` directory. In essence, you have used a template repo to start work on a new project. `enzo` will ask you to give a name for the new repo, and will invoke `git init` in the end.
+

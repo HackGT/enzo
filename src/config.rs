@@ -80,6 +80,8 @@ pub fn read_config(name: &str) -> Result<Config, Box<dyn Error>> {
     };
 
     let mut buffer = String::new();
+
+    // TODO handle this error more gracefully
     file.read_to_string(&mut buffer)?;
 
     let config = serde_yaml::from_str(buffer.as_str())?;
@@ -102,7 +104,9 @@ fn create_config_file(path: &PathBuf) -> Result<File, Box<dyn Error>> {
 
     let config = Config::new(name, workspaces);
 
+    // TODO handle this error more gracefully
     let s = serde_yaml::to_string(&config)?;
+
     if let Err(_) = file.write(s.as_bytes()) {
         return Err(Box::new(ConfigError::new(
             "Could not write config info to the configuration file",
