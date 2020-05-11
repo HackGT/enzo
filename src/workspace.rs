@@ -22,25 +22,26 @@ pub fn read_from_stdin() -> Result<(WorkspaceName, WorkspaceData), FatalError> {
     let name = input::<String>()
         .msg(query("Workspace name", None, None))
         .get();
-    let mut path = get_home_dir()?;
+
+    let home = get_home_dir()?;
     let mut ext;
+    let mut base;
+
     loop {
+        base = home.clone();
         ext = input::<String>()
             .msg(query("Path to workspace", Some("$HOME"), Some("$HOME/")))
             .get();
-        println!("{:#?}", path);
-        path.push(ext);
-        if !path.exists() {
+        base.push(ext);
+        if !base.exists() {
             println!("Hmmm. looks like that wasn't a valid path. Try again\n");
-            path.pop();
         } else {
             break;
         }
     }
-
-    // initialize with no projects
-    // can change in the future to scan the directory and populate the file
-    let data = WorkspaceData::new(path, vec![]);
+    println!("{:?}", base);
+    // TODO change in the future to scan the directory and populate projects vec
+    let data = WorkspaceData::new(base, vec![]);
 
     Ok((WorkspaceName(name), data))
 }

@@ -61,9 +61,11 @@ fn print_warning(msg: String) {
 
 impl Error for ConfigError {}
 
+// TODO change from Box<dyn Error> to something that doesn't depend on dynamic dispatch
 pub fn read_config(name: &str) -> Result<Config, Box<dyn Error>> {
     let mut config_file_path = get_home_dir()?;
     config_file_path.push(name);
+
     if !config_file_path.exists() {
         print_warning(format!("Couldn't find {}", Color::Blue.bold().paint(name)));
         create_config_file(&config_file_path)?;
