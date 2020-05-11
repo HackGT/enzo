@@ -5,8 +5,8 @@ use std::path::PathBuf;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WorkspaceData {
-    path: PathBuf,
-    projects: Vec<String>,
+    pub path: PathBuf,
+    pub projects: Vec<String>,
 }
 
 impl WorkspaceData {
@@ -16,7 +16,7 @@ impl WorkspaceData {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
-pub struct WorkspaceName(String);
+pub struct WorkspaceName(pub String);
 
 pub fn read_from_stdin() -> Result<(WorkspaceName, WorkspaceData), FatalError> {
     let name = input::<String>()

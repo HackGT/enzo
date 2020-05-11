@@ -12,11 +12,11 @@ use std::path::PathBuf;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     recent_workspace: WorkspaceName,
-    workspaces: HashMap<WorkspaceName, WorkspaceData>,
+    pub workspaces: HashMap<WorkspaceName, WorkspaceData>,
 }
 
 impl Config {
-    fn new(
+    pub fn new(
         recent_workspace: WorkspaceName,
         workspaces: HashMap<WorkspaceName, WorkspaceData>,
     ) -> Config {
@@ -24,6 +24,23 @@ impl Config {
             recent_workspace,
             workspaces,
         }
+    }
+
+    fn resolve_path(&self, path: String) -> Option<PathBuf> {
+        let mut path = PathBuf::from(path);
+        loop {
+            if let Some(val) = self.get_workspace_data(&path.to_string_lossy()) {
+                return Some(PathBuf::from(&val.path));
+            }
+            if !path.pop() {
+                break;
+            }
+        }
+        None
+    }
+
+    fn get_workspace_data(&self, name: &str) -> Option<&WorkspaceData> {
+        self.workspaces.get(&WorkspaceName(name.to_string()))
     }
 }
 
@@ -37,10 +54,6 @@ impl ConfigError {
         ConfigError {
             msg: msg.to_owned(),
         }
-    }
-
-    fn resolve_path(path: String) -> Option<PathBuf> {
-        None
     }
 }
 
