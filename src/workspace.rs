@@ -10,7 +10,7 @@ pub struct WorkspaceData {
 }
 
 impl WorkspaceData {
-    fn new(path: PathBuf, projects: Vec<String>) -> WorkspaceData {
+    pub fn new(path: PathBuf, projects: Vec<String>) -> WorkspaceData {
         WorkspaceData { path, projects }
     }
 }

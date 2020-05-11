@@ -134,3 +134,23 @@ fn create_config_file(path: &PathBuf) -> Result<File, Box<dyn Error>> {
 
     Ok(file)
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn resolve_path_simple() {
+        // setup
+        let workspace_name = WorkspaceName(String::from("hackgt"));
+        let workspace_data = WorkspaceData::new(PathBuf::from("dev/hackgt"), vec![]);
+        let mut workspaces = HashMap::new();
+        workspaces.insert(workspace_name.clone(), workspace_data);
+        let config = Config::new(workspace_name, workspaces);
+
+        assert_eq!(
+            config.resolve_path(String::from("hackgt")),
+            Some(PathBuf::from("dev/hackgt"))
+        );
+    }
+}
