@@ -38,6 +38,10 @@ impl ConfigError {
             msg: msg.to_owned(),
         }
     }
+
+    fn resolve_path(path: String) -> Option<PathBuf> {
+        None
+    }
 }
 
 impl fmt::Display for ConfigError {
