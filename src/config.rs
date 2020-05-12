@@ -25,17 +25,29 @@ impl Config {
             workspaces,
         }
     }
-
+    // main issue is this
+    //      hackgt/dev/ == hackgt/dev
+    //      /horizons is an absolute path
+    //
+    //  input => hackgt/websites/horizons or hackgt/websites/horizons/
+    //  output => dev/websites/horizons
     fn resolve_path(&self, path: String) -> Option<PathBuf> {
-        let mut path = PathBuf::from(path);
-        loop {
-            if let Some(val) = self.get_workspace_data(&path.to_string_lossy()) {
-                return Some(PathBuf::from(&val.path));
-            }
-            if !path.pop() {
-                break;
+        let mut i = path.len();
+        if path.rfind("/").unwrap_or(0) == path.len() {
+            i = i - 1;
+        }
+        while i > 0 {
+            if let Some(val) = self.get_workspace_data(&path[..i]) {
+                let mut resolved_path = val.path.clone();
+                if path[i..].len() > 0 {
+                    resolved_path.push(&path[i + 1..]);
+                }
+                return Some(resolved_path);
+            } else {
+                i = path[..i].rfind("/").unwrap_or(0);
             }
         }
+
         None
     }
 
@@ -146,11 +158,28 @@ mod test {
         let workspace_data = WorkspaceData::new(PathBuf::from("dev/hackgt"), vec![]);
         let mut workspaces = HashMap::new();
         workspaces.insert(workspace_name.clone(), workspace_data);
+
         let config = Config::new(workspace_name, workspaces);
 
         assert_eq!(
             config.resolve_path(String::from("hackgt")),
             Some(PathBuf::from("dev/hackgt"))
+        );
+    }
+
+    #[test]
+    fn resolve_path_complex() {
+        // setup
+        let workspace_name = WorkspaceName(String::from("hackgt/websites"));
+        let workspace_data = WorkspaceData::new(PathBuf::from("dev/websites/hackgt/"), vec![]);
+        let mut workspaces = HashMap::new();
+        workspaces.insert(workspace_name.clone(), workspace_data);
+
+        let config = Config::new(workspace_name, workspaces);
+
+        assert_eq!(
+            config.resolve_path(String::from("hackgt/websites/horizons")),
+            Some(PathBuf::from("dev/websites/hackgt/horizons"))
         );
     }
 }

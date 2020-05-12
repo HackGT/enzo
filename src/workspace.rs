@@ -43,5 +43,5 @@ pub fn read_from_stdin() -> Result<(WorkspaceName, WorkspaceData), FatalError> {
     // TODO change in the future to scan the directory and populate projects vec
     let data = WorkspaceData::new(base, vec![]);
 
-    Ok((WorkspaceName(name), data))
+    Ok((WorkspaceName(name.to_string()), data))
 }
