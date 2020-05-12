@@ -15,6 +15,8 @@ impl WorkspaceData {
     }
 }
 
+// TODO refactor this struct
+// TODO make sure that the name cannot have a trailing "/"
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct WorkspaceName(pub String);
 

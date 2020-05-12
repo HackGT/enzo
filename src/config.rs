@@ -25,12 +25,7 @@ impl Config {
             workspaces,
         }
     }
-    // main issue is this
-    //      hackgt/dev/ == hackgt/dev
-    //      /horizons is an absolute path
-    //
-    //  input => hackgt/websites/horizons or hackgt/websites/horizons/
-    //  output => dev/websites/horizons
+
     fn resolve_path(&self, path: String) -> Option<PathBuf> {
         let mut i = path.len();
         if path.rfind("/").unwrap_or(0) == path.len() {
@@ -152,34 +147,44 @@ mod test {
     use super::*;
 
     #[test]
-    fn resolve_path_simple() {
-        // setup
-        let workspace_name = WorkspaceName(String::from("hackgt"));
-        let workspace_data = WorkspaceData::new(PathBuf::from("dev/hackgt"), vec![]);
-        let mut workspaces = HashMap::new();
-        workspaces.insert(workspace_name.clone(), workspace_data);
+    fn resolve_path() {
+        let input = vec![
+            ("hackgt", "dev/hackgt"),
+            ("hackgt/websites", "dev/hackgt/websites/"),
+            ("college", "life/teen/college"),
+            ("college/hw", "work/college/more_work/hw/"),
+        ];
 
-        let config = Config::new(workspace_name, workspaces);
+        let mut workspaces = HashMap::new();
+        for (key, value) in input {
+            workspaces.insert(
+                WorkspaceName(String::from(key)),
+                WorkspaceData::new(PathBuf::from(value), vec![]),
+            );
+        }
+        let recent_workspace = WorkspaceName(String::from("hackgt"));
+
+        let config = Config::new(recent_workspace, workspaces);
 
         assert_eq!(
-            config.resolve_path(String::from("hackgt")),
+            config.resolve_path("hackgt".to_string()),
             Some(PathBuf::from("dev/hackgt"))
         );
-    }
-
-    #[test]
-    fn resolve_path_complex() {
-        // setup
-        let workspace_name = WorkspaceName(String::from("hackgt/websites"));
-        let workspace_data = WorkspaceData::new(PathBuf::from("dev/websites/hackgt/"), vec![]);
-        let mut workspaces = HashMap::new();
-        workspaces.insert(workspace_name.clone(), workspace_data);
-
-        let config = Config::new(workspace_name, workspaces);
-
         assert_eq!(
-            config.resolve_path(String::from("hackgt/websites/horizons")),
-            Some(PathBuf::from("dev/websites/hackgt/horizons"))
+            config.resolve_path("hackgt/".to_string()),
+            Some(PathBuf::from("dev/hackgt"))
+        );
+        assert_eq!(
+            config.resolve_path("hackgt/websites".to_string()),
+            Some(PathBuf::from("dev/hackgt/websites"))
+        );
+        assert_eq!(
+            config.resolve_path("college/sophomore/fall2018/".to_string()),
+            Some(PathBuf::from("life/teen/college/sophomore/fall2018"))
+        );
+        assert_eq!(
+            config.resolve_path("college/hw/cs2110/prj1".to_string()),
+            Some(PathBuf::from("work/college/more_work/hw/cs2110/prj1"))
         );
     }
 }
