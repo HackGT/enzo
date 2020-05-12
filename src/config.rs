@@ -12,7 +12,7 @@ use std::path::PathBuf;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     recent_workspace: WorkspaceName,
-    pub workspaces: HashMap<WorkspaceName, WorkspaceData>,
+    workspaces: HashMap<WorkspaceName, WorkspaceData>,
 }
 
 impl Config {
@@ -26,9 +26,9 @@ impl Config {
         }
     }
 
-    fn resolve_path(&self, path: String) -> Option<PathBuf> {
+    pub fn resolve_path(&self, path: String) -> Option<PathBuf> {
         let mut i = path.len();
-        if path.rfind("/").unwrap_or(0) == path.len() {
+        if path.ends_with("/") {
             i = i - 1;
         }
         while i > 0 {
@@ -44,6 +44,18 @@ impl Config {
         }
 
         None
+    }
+
+    pub fn add(&mut self, name: &WorkspaceName, data: &WorkspaceData) {
+        self.workspaces.insert(name.clone(), data.clone());
+    }
+
+    pub fn get_path(&self, name: &WorkspaceName) -> Option<&PathBuf> {
+        if let Some(data) = self.workspaces.get(name) {
+            Some(&data.path)
+        } else {
+            None
+        }
     }
 
     fn get_workspace_data(&self, name: &str) -> Option<&WorkspaceData> {
@@ -147,10 +159,22 @@ mod test {
     use super::*;
 
     #[test]
-    fn resolve_path() {
+    fn resolve_path_none() {
+        let recent_workspace = WorkspaceName(String::from(""));
+        let workspaces = HashMap::new();
+
+        let config = Config::new(recent_workspace, workspaces);
+
+        assert_eq!(config.resolve_path("hackgt".to_string()), None);
+        assert_eq!(config.resolve_path("".to_string()), None);
+        assert_eq!(config.resolve_path("/".to_string()), None);
+    }
+
+    #[test]
+    fn resolve_path_some() {
         let input = vec![
             ("hackgt", "dev/hackgt"),
-            ("hackgt/websites", "dev/hackgt/websites/"),
+            ("hackgt.websites", "dev/hackgt/websites/"),
             ("college", "life/teen/college"),
             ("college/hw", "work/college/more_work/hw/"),
         ];
@@ -175,8 +199,12 @@ mod test {
             Some(PathBuf::from("dev/hackgt"))
         );
         assert_eq!(
-            config.resolve_path("hackgt/websites".to_string()),
+            config.resolve_path("hackgt.websites".to_string()),
             Some(PathBuf::from("dev/hackgt/websites"))
+        );
+        assert_eq!(
+            config.resolve_path("hackgt.websites/horizons".to_string()),
+            Some(PathBuf::from("dev/hackgt/websites/horizons"))
         );
         assert_eq!(
             config.resolve_path("college/sophomore/fall2018/".to_string()),

@@ -3,7 +3,7 @@ use read_input::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WorkspaceData {
     pub path: PathBuf,
     pub projects: Vec<String>,
@@ -15,8 +15,6 @@ impl WorkspaceData {
     }
 }
 
-// TODO refactor this struct
-// TODO make sure that the name cannot have a trailing "/"
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct WorkspaceName(pub String);
 
@@ -41,7 +39,8 @@ pub fn read_from_stdin() -> Result<(WorkspaceName, WorkspaceData), FatalError> {
             break;
         }
     }
-    println!("{:?}", base);
+    // println!("{:?}", base);
+
     // TODO change in the future to scan the directory and populate projects vec
     let data = WorkspaceData::new(base, vec![]);
 

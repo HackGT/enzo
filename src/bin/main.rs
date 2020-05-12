@@ -3,7 +3,7 @@ use std::process;
 
 fn main() {
     let config_file_name = ".enzo.config.yaml";
-    let _conf = match enzo::config::read_config(config_file_name) {
+    let mut conf = match enzo::config::read_config(config_file_name) {
         Ok(val) => val,
         Err(e) => {
             eprintln!("{}", e);
@@ -32,12 +32,10 @@ fn main() {
 
     match matches.subcommand() {
         ("clone", Some(clone_matches)) => {
-            println!(
-                "Cloning {} into {}",
-                clone_matches.value_of("source").unwrap(),
-                clone_matches.value_of("destination").unwrap()
-            );
-            enzo::git::clone(String::new(), String::new());
+            let src = clone_matches.value_of("source").unwrap();
+            let dst = clone_matches.value_of("destination").unwrap();
+
+            enzo::clone(&mut conf, src.to_string(), dst.to_string());
         }
         ("", None) => println!("No subcommand was used"),
         _ => unreachable!(),

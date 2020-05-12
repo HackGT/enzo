@@ -4,7 +4,7 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 
 // TODO add fallbacks if credential fetching fails
-pub fn clone(_src: String, _dst: String) {
+pub fn clone(src: String, dst: &Path) {
     if let Some((username, password)) = get_git_credentials("https", "github.com") {
         let mut callbacks = RemoteCallbacks::new();
         callbacks.credentials(|_url, _username_from_url, _allowed_types| {
@@ -17,9 +17,7 @@ pub fn clone(_src: String, _dst: String) {
         let mut builder = RepoBuilder::new();
         builder.fetch_options(fo);
 
-        builder
-            .clone("https://github.com/HackGT/est.git", Path::new("est"))
-            .unwrap();
+        builder.clone(src.as_str(), dst).unwrap();
     } else {
     };
 }
