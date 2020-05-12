@@ -1,10 +1,9 @@
-use crate::utils::{fatal_error::FatalError, get_home_dir};
+use crate::utils;
+use crate::utils::error::{EnzoError, EnzoErrorType};
 use crate::workspace::{self, WorkspaceData, WorkspaceName};
 use ansi_term::Color;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::error::Error;
-use std::fmt;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
@@ -63,30 +62,6 @@ impl Config {
     }
 }
 
-#[derive(Debug)]
-pub struct ConfigError {
-    msg: String,
-}
-
-impl ConfigError {
-    fn new(msg: &str) -> ConfigError {
-        ConfigError {
-            msg: msg.to_owned(),
-        }
-    }
-}
-
-impl fmt::Display for ConfigError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{} {}",
-            Color::Red.bold().paint("configuration file error"),
-            self.msg
-        )
-    }
-}
-
 fn print_warning(msg: String) {
     println!(
         "{} {}",
@@ -95,11 +70,9 @@ fn print_warning(msg: String) {
     );
 }
 
-impl Error for ConfigError {}
-
 // TODO change from Box<dyn Error> to something that doesn't depend on dynamic dispatch
-pub fn read_config(name: &str) -> Result<Config, Box<dyn Error>> {
-    let mut config_file_path = get_home_dir()?;
+pub fn read_config(name: &str) -> Result<Config, EnzoError> {
+    let mut config_file_path = utils::get_home_dir()?;
     config_file_path.push(name);
 
     if !config_file_path.exists() {
@@ -111,29 +84,44 @@ pub fn read_config(name: &str) -> Result<Config, Box<dyn Error>> {
         Ok(handle) => handle,
         Err(_) => {
             // critical error, because the config file should've been made by now
-            return Err(Box::new(FatalError::new(
-                "Could not find .enzo.config.yaml file",
-            )));
+            return Err(EnzoError::new(
+                "Config file could not be opened",
+                EnzoErrorType::FatalError,
+            ));
         }
     };
 
     let mut buffer = String::new();
 
     // TODO handle this error more gracefully
-    file.read_to_string(&mut buffer)?;
+    if let Err(e) = file.read_to_string(&mut buffer) {
+        return Err(EnzoError::new(
+            format!("Failed to read from config file. Cause: {:?}", e).as_str(),
+            EnzoErrorType::ConfigError,
+        ));
+    }
 
-    let config = serde_yaml::from_str(buffer.as_str())?;
+    let config = match serde_yaml::from_str(buffer.as_str()) {
+        Ok(config) => config,
+        Err(e) => {
+            return Err(EnzoError::new(
+                format!("Failed to deserialize config file. Cause: {:?}", e).as_str(),
+                EnzoErrorType::ConfigError,
+            ))
+        }
+    };
 
     Ok(config)
 }
 
-fn create_config_file(path: &PathBuf) -> Result<File, Box<dyn Error>> {
+fn create_config_file(path: &PathBuf) -> Result<File, EnzoError> {
     let mut file = match File::create(path) {
         Ok(handle) => handle,
         Err(_) => {
-            return Err(Box::new(ConfigError::new(
+            return Err(EnzoError::new(
                 format!("Couldn't create config file in {:?}", path).as_str(),
-            )))
+                EnzoErrorType::ConfigError,
+            ));
         }
     };
     let (name, data) = workspace::read_from_stdin()?;
@@ -142,13 +130,21 @@ fn create_config_file(path: &PathBuf) -> Result<File, Box<dyn Error>> {
 
     let config = Config::new(name, workspaces);
 
-    // TODO handle this error more gracefully
-    let s = serde_yaml::to_string(&config)?;
+    let s = match serde_yaml::to_string(&config) {
+        Ok(s) => s,
+        Err(e) => {
+            return Err(EnzoError::new(
+                format!("Failed to serialize config data. Cause: {:?}", e).as_str(),
+                EnzoErrorType::ConfigError,
+            ))
+        }
+    };
 
     if let Err(_) = file.write(s.as_bytes()) {
-        return Err(Box::new(ConfigError::new(
+        return Err(EnzoError::new(
             "Could not write config info to the configuration file",
-        )));
+            EnzoErrorType::ConfigError,
+        ));
     }
 
     Ok(file)

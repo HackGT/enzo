@@ -3,9 +3,9 @@ pub mod git;
 mod utils;
 mod workspace;
 
-use utils::fatal_error::FatalError;
+use utils::error::{EnzoError, EnzoErrorType};
 
-pub fn clone(config: &mut config::Config, src: String, dst: String) -> Result<(), FatalError> {
+pub fn clone(config: &mut config::Config, src: String, dst: String) -> Result<(), EnzoError> {
     // 1. resolve the src
     // TODO better handling of src
     //      detect if it is a url
@@ -22,7 +22,10 @@ pub fn clone(config: &mut config::Config, src: String, dst: String) -> Result<()
             config.add(name, data);
             data.path.clone()
         } else {
-            return Err(FatalError::new("Could not add workspace to the config"));
+            return Err(EnzoError::new(
+                "Could not read workspace from stdin",
+                EnzoErrorType::FatalError,
+            ));
         }
     };
 

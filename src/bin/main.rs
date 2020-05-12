@@ -1,6 +1,8 @@
 use clap::{App, Arg};
 use std::process;
 
+// TODO write a try! macro to try something. if errs, print the error
+
 fn main() {
     let config_file_name = ".enzo.config.yaml";
     let mut conf = match enzo::config::read_config(config_file_name) {

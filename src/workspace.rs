@@ -1,4 +1,4 @@
-use crate::utils::{fatal_error::FatalError, get_home_dir, query};
+use crate::utils;
 use read_input::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -18,19 +18,23 @@ impl WorkspaceData {
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct WorkspaceName(pub String);
 
-pub fn read_from_stdin() -> Result<(WorkspaceName, WorkspaceData), FatalError> {
+pub fn read_from_stdin() -> Result<(WorkspaceName, WorkspaceData), utils::error::EnzoError> {
     let name = input::<String>()
-        .msg(query("Workspace name", None, None))
+        .msg(utils::query("Workspace name", None, None))
         .get();
 
-    let home = get_home_dir()?;
+    let home = utils::get_home_dir()?;
     let mut ext;
     let mut base;
 
     loop {
         base = home.clone();
         ext = input::<String>()
-            .msg(query("Path to workspace", Some("$HOME"), Some("$HOME/")))
+            .msg(utils::query(
+                "Path to workspace",
+                Some("$HOME"),
+                Some("$HOME/"),
+            ))
             .get();
         base.push(ext);
         if !base.exists() {

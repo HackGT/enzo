@@ -1,17 +1,21 @@
-pub mod fatal_error;
+pub mod error;
 
 use ansi_term::Color;
 use dirs::home_dir;
-use fatal_error::FatalError;
+use error::{EnzoError, EnzoErrorType};
 use std::path::PathBuf;
 
-pub fn get_home_dir() -> Result<PathBuf, FatalError> {
+pub fn get_home_dir() -> Result<PathBuf, EnzoError> {
     match home_dir() {
         Some(path) => Ok(path),
-        None => Err(FatalError::new("Couldn't access the home directory")),
+        None => Err(EnzoError::new(
+            "Couldn't access the home directory",
+            EnzoErrorType::FatalError,
+        )),
     }
 }
 
+// TODO add support for hints
 pub fn query(question: &str, default: Option<&str>, pre: Option<&str>) -> String {
     format!(
         "{} {} {}\n> {}",
