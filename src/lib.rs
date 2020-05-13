@@ -1,6 +1,6 @@
 pub mod config;
 pub mod git;
-mod utils;
+pub mod utils;
 mod workspace;
 
 use utils::error::{EnzoError, EnzoErrorType};

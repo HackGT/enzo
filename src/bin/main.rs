@@ -32,16 +32,18 @@ fn main() {
         )
         .get_matches();
 
-    match matches.subcommand() {
+    let res = match matches.subcommand() {
         ("clone", Some(clone_matches)) => {
             let src = clone_matches.value_of("source").unwrap();
             let dst = clone_matches.value_of("destination").unwrap();
 
-            if let Err(e) = enzo::clone(&mut conf, src.to_string(), dst.to_string()) {
-                eprintln!("{}", e);
-            }
+            enzo::clone(&mut conf, src.to_string(), dst.to_string())
         }
-        ("", None) => println!("No subcommand was used"),
+        ("", None) => Ok(()),
         _ => unreachable!(),
     };
+
+    if let Err(e) = res {
+        eprintln!("{}", e);
+    }
 }
