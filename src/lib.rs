@@ -20,8 +20,9 @@ fn resolve_dst(config: &mut config::Config, dst: &str, name: &str) -> Result<Pat
         Some(base_path) => base_path,
         None => {
             let (name, data) = workspace::query_workspace()?;
-            config.add(&name, &data);
-            data.path.clone()
+            let path = data.path.clone();
+            config.add(name.0, data);
+            path
         }
     };
 

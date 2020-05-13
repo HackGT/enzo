@@ -34,7 +34,7 @@ impl TryFrom<&Path> for Config {
 }
 
 impl Config {
-    fn read(&mut self) -> Result<(), EnzoError> {
+    pub fn read(&mut self) -> Result<(), EnzoError> {
         if !self.path.exists() {
             return Err(EnzoError::new(
                 format!("Configuration file does not exist in {:?}", self.path),
@@ -50,11 +50,31 @@ impl Config {
         Ok(())
     }
 
-    fn write(&mut self) -> Result<(), EnzoError> {
+    pub fn write(&mut self) -> Result<(), EnzoError> {
         let mut file = File::create(&self.path)?;
         let s = serde_yaml::to_string(&self)?;
         file.write_all(s.as_bytes())?;
         Ok(())
+    }
+
+    pub fn add(&mut self, name: String, data: WorkspaceData) -> Option<WorkspaceData> {
+        self.workspaces.insert(WorkspaceName(name), data)
+    }
+
+    pub fn remove(&mut self, name: String) -> Option<WorkspaceData> {
+        self.workspaces.remove(&WorkspaceName(name))
+    }
+
+    pub fn get(&mut self, name: String) -> Option<&WorkspaceData> {
+        self.workspaces.get(&WorkspaceName(name))
+    }
+
+    pub fn get_path(&mut self, name: String) -> Option<&PathBuf> {
+        if let Some(data) = self.get(name) {
+            Some(&data.path)
+        } else {
+            None
+        }
     }
 
     pub fn resolve_path(&self, path: String) -> Option<PathBuf> {
@@ -74,18 +94,6 @@ impl Config {
             }
         }
         None
-    }
-
-    pub fn add(&mut self, name: &WorkspaceName, data: &WorkspaceData) {
-        self.workspaces.insert(name.clone(), data.clone());
-    }
-
-    pub fn get_path(&self, name: &WorkspaceName) -> Option<&PathBuf> {
-        if let Some(data) = self.workspaces.get(name) {
-            Some(&data.path)
-        } else {
-            None
-        }
     }
 
     fn get_workspace_data(&self, name: &str) -> Option<&WorkspaceData> {

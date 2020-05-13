@@ -67,4 +67,6 @@ fn main() {
     if let Err(e) = res {
         eprintln!("{}", e);
     }
+
+    conf.write().unwrap();
 }
