@@ -1,6 +1,6 @@
+use crate::utils;
 use crate::utils::error::{EnzoError, EnzoErrorKind};
 use crate::workspace::{self, WorkspaceData, WorkspaceName};
-use ansi_term::Color;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::convert::TryFrom;
@@ -25,9 +25,22 @@ impl TryFrom<&Path> for Config {
         if path.exists() {
             config.read()?;
         } else {
+            utils::warning(
+                format!(
+                    "could not find {}\n",
+                    ansi_term::Color::Blue.paint(".enzo.config.yaml")
+                )
+                .as_str(),
+            );
+
+            utils::info("enzo will create one for you\n");
+
             let (name, data) = workspace::query_workspace()?;
             config.workspaces.insert(name, data);
+
+            utils::info("processing");
             config.write()?;
+            utils::success("data written to .enzo.config.yaml");
         }
         Ok(config)
     }
@@ -99,14 +112,6 @@ impl Config {
     fn get_workspace_data(&self, name: &str) -> Option<&WorkspaceData> {
         self.workspaces.get(&WorkspaceName(name.to_string()))
     }
-}
-
-fn print_warning(msg: String) {
-    println!(
-        "{} {}",
-        Color::Yellow.bold().paint("configuration warning:"),
-        msg
-    );
 }
 
 #[cfg(test)]

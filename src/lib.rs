@@ -64,11 +64,17 @@ fn name_helper<'a>(
 }
 
 pub fn new(config: &mut config::Config, input: &ArgMatches) -> Result<(), EnzoError> {
+    utils::info("resolving src");
     let src = resolve_src(input.value_of("src").unwrap());
+
+    utils::info("resolving dst");
     let name = name_helper(input.value_of("src").unwrap(), input.value_of("name"), true)?;
     let dst = resolve_dst(config, input.value_of("dst").unwrap(), name.as_str())?;
 
+    utils::info(format!("cloning {} into {:?}", src, dst).as_str());
     git::clone(src, &dst)?;
+    utils::success("");
+
     // remove the .git dir
     // git init
 
@@ -76,15 +82,20 @@ pub fn new(config: &mut config::Config, input: &ArgMatches) -> Result<(), EnzoEr
 }
 
 pub fn clone(config: &mut config::Config, input: &ArgMatches) -> Result<(), EnzoError> {
+    utils::info("resolving src");
     let src = resolve_src(input.value_of("src").unwrap());
+
+    utils::info("resolving dst");
     let name = name_helper(
         input.value_of("src").unwrap(),
         input.value_of("name"),
         false,
     )?;
     let dst = resolve_dst(config, input.value_of("dst").unwrap(), name.as_str())?;
-
-    git::clone(src, &dst)
+    utils::info(format!("cloning {} into {:?}", src, dst).as_str());
+    git::clone(src, &dst)?;
+    utils::success("");
+    Ok(())
 }
 
 fn get_repo_name<'a>(src: &'a str) -> Option<&'a str> {

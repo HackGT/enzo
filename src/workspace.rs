@@ -23,6 +23,8 @@ pub fn query_workspace() -> Result<(WorkspaceName, WorkspaceData), utils::error:
         .msg(format!("{}", Question::new_question("Workspace name")))
         .get();
 
+    println!();
+
     let home = utils::get_home_dir()?;
     let mut ext;
     let mut base;
@@ -43,6 +45,7 @@ pub fn query_workspace() -> Result<(WorkspaceName, WorkspaceData), utils::error:
         }
     }
     // println!("{:?}", base);
+    println!();
 
     // TODO change in the future to scan the directory and populate projects vec
     let data = WorkspaceData::new(base, vec![]);
