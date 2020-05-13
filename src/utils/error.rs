@@ -1,59 +1,53 @@
-use ansi_term::Color;
+use ansi_term::Color::{Purple, Red, Yellow};
+use std::convert::From;
 use std::error::Error;
 use std::fmt;
+use std::io;
 
 #[derive(Debug)]
 pub struct EnzoError {
-    error_type: EnzoErrorType,
+    kind: EnzoErrorKind,
     msg: String,
-    cause: Option<String>,
 }
 
 impl EnzoError {
-    pub fn new(msg: &str, error_type: EnzoErrorType, cause: Option<String>) -> EnzoError {
-        EnzoError {
-            msg: msg.to_string(),
-            error_type,
-            cause,
-        }
+    pub fn new(msg: String, kind: EnzoErrorKind) -> EnzoError {
+        EnzoError { msg, kind }
     }
 }
 
-#[derive(Debug)]
-pub enum EnzoErrorType {
-    FatalError,
-    ConfigError,
-    GitError,
+impl From<io::Error> for EnzoError {
+    fn from(error: io::Error) -> Self {
+        EnzoError::new(format!("{}", error), EnzoErrorKind::IOError)
+    }
 }
 
 impl fmt::Display for EnzoError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let cause_msg = match &self.cause {
-            Some(val) => format!("\n{}: {}", Color::Yellow.bold().paint("cause"), val),
-            None => String::new(),
-        };
-        let msg = match self.error_type {
-            EnzoErrorType::FatalError => format!(
-                "{}: {}{}",
-                Color::Red.bold().paint("fatal error"),
-                self.msg,
-                cause_msg
-            ),
-            EnzoErrorType::ConfigError => format!(
-                "{}: {}{}",
-                Color::Yellow.bold().paint("configuration error"),
-                self.msg,
-                cause_msg,
-            ),
-            EnzoErrorType::GitError => format!(
-                "{}: {}{}",
-                Color::Purple.bold().paint("git error"),
-                self.msg,
-                cause_msg,
-            ),
-        };
-        write!(f, "{}", msg)
+        write!(f, "{}: {}", self.kind, self.msg)
     }
 }
 
 impl Error for EnzoError {}
+
+#[derive(Debug)]
+pub enum EnzoErrorKind {
+    FatalError,
+    IOError,
+    ConfigError,
+    GitError,
+}
+
+impl fmt::Display for EnzoErrorKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let msg = match self {
+            EnzoErrorKind::FatalError => Red.bold().paint("fatal error"),
+            EnzoErrorKind::IOError => Red.bold().paint("io error"),
+            EnzoErrorKind::ConfigError => Yellow.bold().paint("configuration error"),
+            EnzoErrorKind::GitError => Purple.bold().paint("git error"),
+        };
+
+        write!(f, "{}", msg)
+    }
+}
+

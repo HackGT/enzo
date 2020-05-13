@@ -4,27 +4,62 @@ use crate::workspace::{self, WorkspaceData, WorkspaceName};
 use ansi_term::Color;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::convert::TryFrom;
 use std::fs::File;
 use std::io::prelude::*;
 use std::ops::Drop;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+
+// queries a single workspace from the user
+fn query_workspace() -> Result<(WorkspaceName, WorkspaceData), EnzoError> {}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
-    recent_workspace: WorkspaceName,
+    path: PathBuf,
     workspaces: HashMap<WorkspaceName, WorkspaceData>,
 }
 
-impl Config {
-    pub fn new(
-        recent_workspace: WorkspaceName,
-        workspaces: HashMap<WorkspaceName, WorkspaceData>,
-    ) -> Config {
-        Config {
-            recent_workspace,
-            workspaces,
+// initializes config data structure with path
+// if path does not exists
+//      prompts user to create a config file @path
+//      reads input from stdin
+// else
+//      read from file located at path
+impl TryFrom<&Path> for Config {
+    type Error = EnzoError;
+
+    fn try_from(path: &Path) -> Result<Self, Self::Error> {
+        let mut config = Config {
+            path: path.to_path_buf(),
+            workspaces: HashMap::new(),
+        };
+        if path.exists() {
+            config.read()?;
+        } else {
+            let (name, data) = query_workspace()?;
+            config.workspaces.insert(name, data);
+            // config.write() ; test if control-c will prevent drop from writing
         }
+        Ok(config)
     }
+}
+
+impl Config {
+    fn read(&mut self) -> Result<(), EnzoError> {
+        Ok(())
+    }
+    // pub fn new(path: &Path) -> Result<Config, EnzoError> {
+    //     if path.exists() {
+    //         // read from the file
+    //         //
+    //         // populate structs
+    //         //
+    //         // return config
+    //     } else {
+    //         // print warning
+    //         // prompt user to create a config file @path
+    //     };
+    // }
 
     pub fn resolve_path(&self, path: String) -> Option<PathBuf> {
         let mut i = path.len();
@@ -65,7 +100,7 @@ impl Config {
 
 impl Drop for Config {
     fn drop(&mut self) {
-        println!("dropping config");
+        config.write();
     }
 }
 
