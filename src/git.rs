@@ -1,10 +1,11 @@
+use crate::utils::error::{EnzoError, EnzoErrorType};
 use git2::{build::RepoBuilder, Cred, FetchOptions, RemoteCallbacks};
 use std::io::Write;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
 // TODO add fallbacks if credential fetching fails
-pub fn clone(src: String, dst: &Path) {
+pub fn clone(src: String, dst: &Path) -> Result<(), EnzoError> {
     if let Some((username, password)) = get_git_credentials("https", "github.com") {
         let mut callbacks = RemoteCallbacks::new();
         callbacks.credentials(|_url, _username_from_url, _allowed_types| {
@@ -17,9 +18,26 @@ pub fn clone(src: String, dst: &Path) {
         let mut builder = RepoBuilder::new();
         builder.fetch_options(fo);
 
-        builder.clone(src.as_str(), dst).unwrap();
+        if let Err(e) = builder.clone(src.as_str(), dst) {
+            Err(EnzoError::new(
+                format!(
+                    "Failed to clone {} into {}. Cause: {:?}",
+                    src,
+                    dst.to_string_lossy(),
+                    e
+                )
+                .as_str(),
+                EnzoErrorType::FatalError,
+            ))
+        } else {
+            Ok(())
+        }
     } else {
-    };
+        Err(EnzoError::new(
+            "Failed to obtain git credentials for protocol=https host=github.com",
+            EnzoErrorType::GitError,
+        ))
+    }
 }
 
 // TODO better error handling and messages

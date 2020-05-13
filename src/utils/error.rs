@@ -21,6 +21,7 @@ impl EnzoError {
 pub enum EnzoErrorType {
     FatalError,
     ConfigError,
+    GitError,
 }
 
 impl fmt::Display for EnzoError {
@@ -30,10 +31,13 @@ impl fmt::Display for EnzoError {
                 format!("{}: {}", Color::Red.bold().paint("fatal error"), self.msg)
             }
             EnzoErrorType::ConfigError => format!(
-                "{} {}",
+                "{}: {}",
                 Color::Yellow.bold().paint("configuration error"),
                 self.msg
             ),
+            EnzoErrorType::GitError => {
+                format!("{}: {}", Color::Purple.bold().paint("git error"), self.msg)
+            }
         };
         write!(f, "{}", msg)
     }
