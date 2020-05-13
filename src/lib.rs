@@ -4,6 +4,7 @@ pub mod utils;
 mod workspace;
 
 use clap::ArgMatches;
+use read_input::prelude::*;
 use std::path::PathBuf;
 use utils::error::{EnzoError, EnzoErrorType};
 
@@ -28,80 +29,60 @@ fn resolve_dst(config: &mut config::Config, dst: &str, name: &str) -> Result<Pat
     Ok(dst)
 }
 
+fn read_name_from_stdin() -> Result<String, EnzoError> {
+    let name = input::<String>()
+        .msg(utils::query("Name of the new repo", None, None))
+        .get();
+    Ok(name)
+}
+
 fn name_helper<'a>(
-    src: &'a str,
-    user_provided_name: Option<&'a str>,
-) -> Result<&'a str, EnzoError> {
+    src: &str,
+    user_provided_name: Option<&str>,
+    read_from_stdin: bool,
+) -> Result<String, EnzoError> {
     let name = match user_provided_name {
-        Some(name) => name,
-        None => match get_repo_name(&src) {
-            Some(name) => name,
-            None => return Err(EnzoError::new(
-                "Failed to parse the repo name. It should be of the format 'username/repo_name'",
-                EnzoErrorType::GitError,
-                None,
-            )),
-        },
+        Some(name) => name.to_string(),
+        None => {
+            if read_from_stdin {
+                read_name_from_stdin()?
+            } else {
+                match get_repo_name(&src) {
+                    Some(name) => name.to_string(),
+                    None => return Err(EnzoError::new(format!(
+                        "Failed to parse name of the repo from '{}'. It should be of the format 'username/repo_name'", src).as_str(),
+                        EnzoErrorType::GitError,
+                        None,
+                    )),
+                }
+            }
+        }
     };
+
     Ok(name)
 }
 
 pub fn new(config: &mut config::Config, input: &ArgMatches) -> Result<(), EnzoError> {
     // 1. resolve src
     let src = resolve_src(input.value_of("src").unwrap());
-    let name = name_helper(&src, input.value_of("name"))?;
-    let dst = resolve_dst(config, input.value_of("dst").unwrap(), name)?;
-    println!("src:{}\ndst:{:?}", src, dst);
+    let name = name_helper(input.value_of("src").unwrap(), input.value_of("name"), true)?;
+    let dst = resolve_dst(config, input.value_of("dst").unwrap(), name.as_str())?;
 
-    // clone_helper(config, src, dst, template_name)?;
-    // 2. clone the repo
+    git::clone(src, &dst)?;
+    // remove the .git dir
+    // git init
 
-    // 3. delete the .git dir
-
-    // 4. run git init
     Ok(())
 }
 
 pub fn clone(config: &mut config::Config, input: &ArgMatches) -> Result<(), EnzoError> {
-    // required args
-    let src = input.value_of("src").unwrap();
-    let dst = input.value_of("dst").unwrap();
-
-    // optional args
-    let repo_name = if let Some(repo_name) = input.value_of("name") {
-        repo_name
-    } else {
-        match get_repo_name(&src) {
-            Some(name) => name,
-            None => return Err(EnzoError::new(
-                "Failed to parse the repo name. It should be of the format 'username/repo_name'",
-                EnzoErrorType::GitError,
-                None,
-            )),
-        }
-    };
-
-    let src = resolve_src(src);
-    // 2. resolve the dst
-    let dst = if let Some(mut dst) = config.resolve_path(dst.to_string()) {
-        dst.push(repo_name.to_string());
-        dst
-    } else {
-        // prompt user to create a workspace
-        if let Ok((ref name, ref data)) = workspace::read_from_stdin() {
-            config.add(name, data);
-            data.path.clone()
-        } else {
-            return Err(EnzoError::new(
-                "Could not read workspace from stdin",
-                EnzoErrorType::FatalError,
-                None,
-            ));
-        }
-    };
-
-    println!("source: {}", src);
-    println!("dest: {:?}", dst);
+    let src = resolve_src(input.value_of("src").unwrap());
+    let name = name_helper(
+        input.value_of("src").unwrap(),
+        input.value_of("name"),
+        false,
+    )?;
+    let dst = resolve_dst(config, input.value_of("dst").unwrap(), name.as_str())?;
 
     git::clone(src, &dst)
 }
