@@ -6,7 +6,8 @@ mod workspace;
 use clap::ArgMatches;
 use read_input::prelude::*;
 use std::path::PathBuf;
-use utils::error::{EnzoError, EnzoErrorType};
+use utils::error::{EnzoError, EnzoErrorKind};
+use utils::query::Question;
 
 fn resolve_src(src: &str) -> String {
     // TODO more robust src resolution; only once git supports ssh credentials and stuff
@@ -18,7 +19,7 @@ fn resolve_dst(config: &mut config::Config, dst: &str, name: &str) -> Result<Pat
     let mut dst = match res {
         Some(base_path) => base_path,
         None => {
-            let (name, data) = workspace::read_from_stdin()?;
+            let (name, data) = workspace::query_workspace()?;
             config.add(&name, &data);
             data.path.clone()
         }
@@ -31,7 +32,7 @@ fn resolve_dst(config: &mut config::Config, dst: &str, name: &str) -> Result<Pat
 
 fn read_name_from_stdin() -> Result<String, EnzoError> {
     let name = input::<String>()
-        .msg(utils::query("Name of the new repo", None, None))
+        .msg(format!("{}", Question::new_question("Name of the repo")))
         .get();
     Ok(name)
 }
@@ -50,9 +51,8 @@ fn name_helper<'a>(
                 match get_repo_name(&src) {
                     Some(name) => name.to_string(),
                     None => return Err(EnzoError::new(format!(
-                        "Failed to parse name of the repo from '{}'. It should be of the format 'username/repo_name'", src).as_str(),
-                        EnzoErrorType::GitError,
-                        None,
+                        "Failed to parse name of the repo from '{}'. It should be of the format 'username/repo_name'", src),
+                        EnzoErrorKind::GitError,
                     )),
                 }
             }

@@ -1,4 +1,3 @@
-use crate::utils;
 use crate::utils::error::{EnzoError, EnzoErrorKind};
 use crate::workspace::{self, WorkspaceData, WorkspaceName};
 use ansi_term::Color;
@@ -9,9 +8,6 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::ops::Drop;
 use std::path::{Path, PathBuf};
-
-// queries a single workspace from the user
-fn query_workspace() -> Result<(WorkspaceName, WorkspaceData), EnzoError> {}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -30,7 +26,7 @@ impl TryFrom<&Path> for Config {
         if path.exists() {
             config.read()?;
         } else {
-            let (name, data) = query_workspace()?;
+            let (name, data) = workspace::query_workspace()?;
             config.workspaces.insert(name, data);
             config.write()?;
         }
@@ -47,17 +43,16 @@ impl Config {
             ));
         }
 
-        let mut file = File::open(self.path)?;
+        let mut file = File::open(&self.path)?;
         let mut buffer = String::new();
         file.read_to_string(&mut buffer)?;
-        let Config { workspaces, .. } = serde_yaml::from_str(buffer.as_str())?;
-        self.workspaces = workspaces;
-
+        let Config { ref workspaces, .. } = serde_yaml::from_str(buffer.as_str())?;
+        self.workspaces = workspaces.clone();
         Ok(())
     }
 
     fn write(&mut self) -> Result<(), EnzoError> {
-        let mut file = File::create(self.path)?;
+        let mut file = File::create(&self.path)?;
         let s = serde_yaml::to_string(&self)?;
         file.write_all(s.as_bytes())?;
         Ok(())

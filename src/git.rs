@@ -1,4 +1,4 @@
-use crate::utils::error::{EnzoError, EnzoErrorType};
+use crate::utils::error::{EnzoError, EnzoErrorKind};
 use ansi_term::Color;
 use git2::{build::RepoBuilder, Cred, FetchOptions, RemoteCallbacks};
 use std::io::Write;
@@ -19,25 +19,22 @@ pub fn clone(src: String, dst: &Path) -> Result<(), EnzoError> {
         let mut builder = RepoBuilder::new();
         builder.fetch_options(fo);
 
-        if let Err(e) = builder.clone(src.as_str(), dst) {
+        if let Err(_) = builder.clone(src.as_str(), dst) {
             Err(EnzoError::new(
                 format!(
                     "Failed to clone {} into {}",
                     Color::Blue.bold().paint(src),
                     Color::Blue.bold().paint(dst.to_string_lossy()),
-                )
-                .as_str(),
-                EnzoErrorType::GitError,
-                Some(format!("{:?}", e)),
+                ),
+                EnzoErrorKind::GitError,
             ))
         } else {
             Ok(())
         }
     } else {
         Err(EnzoError::new(
-            "Failed to obtain git credentials for protocol=https host=github.com",
-            EnzoErrorType::GitError,
-            None,
+            "Failed to obtain git credentials for protocol=https host=github.com".to_string(),
+            EnzoErrorKind::GitError,
         ))
     }
 }

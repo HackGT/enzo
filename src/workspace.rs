@@ -1,4 +1,4 @@
-use crate::utils;
+use crate::utils::{self, query::Question};
 use read_input::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -18,9 +18,9 @@ impl WorkspaceData {
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct WorkspaceName(pub String);
 
-pub fn read_from_stdin() -> Result<(WorkspaceName, WorkspaceData), utils::error::EnzoError> {
+pub fn query_workspace() -> Result<(WorkspaceName, WorkspaceData), utils::error::EnzoError> {
     let name = input::<String>()
-        .msg(utils::query("Workspace name", None, None))
+        .msg(format!("{}", Question::new_question("Workspace name")))
         .get();
 
     let home = utils::get_home_dir()?;
@@ -30,10 +30,9 @@ pub fn read_from_stdin() -> Result<(WorkspaceName, WorkspaceData), utils::error:
     loop {
         base = home.clone();
         ext = input::<String>()
-            .msg(utils::query(
-                "Path to workspace",
-                Some("$HOME"),
-                Some("$HOME/"),
+            .msg(format!(
+                "{}",
+                Question::new("Path to workspace", Some("$HOME"), Some("$HOME/"), None)
             ))
             .get();
         base.push(ext);

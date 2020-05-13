@@ -1,11 +1,12 @@
 use clap::{App, Arg};
+use enzo::{config, utils};
+use std::convert::TryFrom;
 use std::process;
 
-// TODO write a try! macro to try something. if errs, print the error
-
 fn main() {
-    let config_file_name = ".enzo.config.yaml";
-    let mut conf = match enzo::config::read_config(config_file_name) {
+    let mut path = utils::get_home_dir().unwrap();
+    path.push(".enzo.config.yaml");
+    let mut conf = match config::Config::try_from(path.as_path()) {
         Ok(val) => val,
         Err(e) => {
             eprintln!("{}", e);
