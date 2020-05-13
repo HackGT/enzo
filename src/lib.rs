@@ -5,13 +5,30 @@ mod workspace;
 
 use utils::error::{EnzoError, EnzoErrorType};
 
-pub fn clone(config: &mut config::Config, src: String, dst: String) -> Result<(), EnzoError> {
+pub fn new(config: &mut config::Config, src: String, dst: String) -> Result<(), EnzoError> {
+    // 1. read name of the repo from the user
+
+    // 2. clone the repo
+    // 3. delete the .git dir
+
+    // 4. run git init
+    Ok(())
+}
+
+pub fn clone(
+    config: &mut config::Config,
+    src: String,
+    dst: String,
+    repo_name: Option<&str>,
+) -> Result<(), EnzoError> {
     // 1. resolve the src
     // TODO better handling of src
     //      detect if it is a url
     //      autodetect host and protocol
     //      use apt steps based on that
-    let repo_name =
+    let repo_name = if let Some(repo_name) = repo_name {
+        repo_name
+    } else {
         match get_repo_name(&src) {
             Some(name) => name,
             None => return Err(EnzoError::new(
@@ -19,7 +36,8 @@ pub fn clone(config: &mut config::Config, src: String, dst: String) -> Result<()
                 EnzoErrorType::GitError,
                 None,
             )),
-        };
+        }
+    };
 
     let src = format!("{}/{}.git", "https://github.com", src);
     // 2. resolve the dst
