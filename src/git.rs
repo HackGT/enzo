@@ -1,4 +1,5 @@
 use crate::utils::error::{EnzoError, EnzoErrorType};
+use ansi_term::Color;
 use git2::{build::RepoBuilder, Cred, FetchOptions, RemoteCallbacks};
 use std::io::Write;
 use std::path::Path;
@@ -22,8 +23,8 @@ pub fn clone(src: String, dst: &Path) -> Result<(), EnzoError> {
             Err(EnzoError::new(
                 format!(
                     "Failed to clone {} into {}\ncause: {:?}",
-                    src,
-                    dst.to_string_lossy(),
+                    Color::Blue.bold().paint(src),
+                    Color::Blue.bold().paint(dst.to_string_lossy()),
                     e
                 )
                 .as_str(),
