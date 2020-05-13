@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
+use std::ops::Drop;
 use std::path::PathBuf;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -59,6 +60,12 @@ impl Config {
 
     fn get_workspace_data(&self, name: &str) -> Option<&WorkspaceData> {
         self.workspaces.get(&WorkspaceName(name.to_string()))
+    }
+}
+
+impl Drop for Config {
+    fn drop(&mut self) {
+        println!("dropping config");
     }
 }
 

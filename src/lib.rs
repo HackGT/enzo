@@ -63,7 +63,6 @@ fn name_helper<'a>(
 }
 
 pub fn new(config: &mut config::Config, input: &ArgMatches) -> Result<(), EnzoError> {
-    // 1. resolve src
     let src = resolve_src(input.value_of("src").unwrap());
     let name = name_helper(input.value_of("src").unwrap(), input.value_of("name"), true)?;
     let dst = resolve_dst(config, input.value_of("dst").unwrap(), name.as_str())?;
