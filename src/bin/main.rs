@@ -37,7 +37,9 @@ fn main() {
             let src = clone_matches.value_of("source").unwrap();
             let dst = clone_matches.value_of("destination").unwrap();
 
-            enzo::clone(&mut conf, src.to_string(), dst.to_string());
+            if let Err(e) = enzo::clone(&mut conf, src.to_string(), dst.to_string()) {
+                eprintln!("{}", e);
+            }
         }
         ("", None) => println!("No subcommand was used"),
         _ => unreachable!(),

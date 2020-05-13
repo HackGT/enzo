@@ -21,13 +21,13 @@ pub fn clone(src: String, dst: &Path) -> Result<(), EnzoError> {
         if let Err(e) = builder.clone(src.as_str(), dst) {
             Err(EnzoError::new(
                 format!(
-                    "Failed to clone {} into {}. Cause: {:?}",
+                    "Failed to clone {} into {}\ncause: {:?}",
                     src,
                     dst.to_string_lossy(),
                     e
                 )
                 .as_str(),
-                EnzoErrorType::FatalError,
+                EnzoErrorType::GitError,
             ))
         } else {
             Ok(())
