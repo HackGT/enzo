@@ -37,7 +37,6 @@ impl<'a> Question<'a> {
     }
 }
 
-// TODO add colors
 impl<'a> fmt::Display for Question<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut q = format!("{} {} ", Green.bold().paint("?"), self.question);

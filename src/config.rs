@@ -114,10 +114,12 @@ mod test {
 
     #[test]
     fn resolve_path_none() {
-        let recent_workspace = WorkspaceName(String::from(""));
         let workspaces = HashMap::new();
 
-        let config = Config::new(recent_workspace, workspaces);
+        let config = Config {
+            path: PathBuf::new(),
+            workspaces,
+        };
 
         assert_eq!(config.resolve_path("hackgt".to_string()), None);
         assert_eq!(config.resolve_path("".to_string()), None);
@@ -140,9 +142,11 @@ mod test {
                 WorkspaceData::new(PathBuf::from(value), vec![]),
             );
         }
-        let recent_workspace = WorkspaceName(String::from("hackgt"));
 
-        let config = Config::new(recent_workspace, workspaces);
+        let config = Config {
+            path: PathBuf::new(),
+            workspaces,
+        };
 
         assert_eq!(
             config.resolve_path("hackgt".to_string()),
