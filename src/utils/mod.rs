@@ -40,7 +40,7 @@ pub fn info(msg: &str) {
 
 pub fn success(msg: &str) {
     println!(
-        "{} {}",
+        "{} {} 🎉",
         ansi_term::Color::Green.bold().paint("[success]"),
         msg
     )

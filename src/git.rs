@@ -1,5 +1,4 @@
 use crate::utils::error::{EnzoError, EnzoErrorKind};
-use ansi_term::Color;
 use git2::{build::RepoBuilder, Cred, FetchOptions, RemoteCallbacks};
 use std::io::Write;
 use std::path::Path;
@@ -19,13 +18,9 @@ pub fn clone(src: String, dst: &Path) -> Result<(), EnzoError> {
         let mut builder = RepoBuilder::new();
         builder.fetch_options(fo);
 
-        if let Err(_) = builder.clone(src.as_str(), dst) {
+        if let Err(e) = builder.clone(src.as_str(), dst) {
             Err(EnzoError::new(
-                format!(
-                    "Failed to clone {} into {}",
-                    Color::Blue.bold().paint(src),
-                    Color::Blue.bold().paint(dst.to_string_lossy()),
-                ),
+                format!("{}", e.message()),
                 EnzoErrorKind::GitError,
             ))
         } else {

@@ -5,6 +5,7 @@ mod workspace;
 
 use clap::ArgMatches;
 use read_input::prelude::*;
+use std::fs;
 use std::path::PathBuf;
 use utils::error::{EnzoError, EnzoErrorKind};
 use utils::query::Question;
@@ -64,37 +65,43 @@ fn name_helper<'a>(
 }
 
 pub fn new(config: &mut config::Config, input: &ArgMatches) -> Result<(), EnzoError> {
-    utils::info("resolving src");
     let src = resolve_src(input.value_of("src").unwrap());
+    utils::info(format!("src = {}", src).as_str());
 
-    utils::info("resolving dst");
     let name = name_helper(input.value_of("src").unwrap(), input.value_of("name"), true)?;
-    let dst = resolve_dst(config, input.value_of("dst").unwrap(), name.as_str())?;
+    let mut dst = resolve_dst(config, input.value_of("dst").unwrap(), name.as_str())?;
+    utils::info(format!("dst = {:?}", dst).as_str());
 
-    utils::info(format!("cloning {} into {:?}", src, dst).as_str());
+    utils::info("initiating clone");
     git::clone(src, &dst)?;
-    utils::success("");
+    utils::success("cloned");
 
-    // remove the .git dir
-    // git init
-
+    utils::info("removing the .git directory");
+    dst.push(".git");
+    fs::remove_dir_all(&dst)?;
+    dst.pop();
+    utils::info("running git init");
+    // TODO write from git2 errors
+    git2::Repository::init(dst).unwrap();
+    utils::success("git repo initialized");
     Ok(())
 }
 
 pub fn clone(config: &mut config::Config, input: &ArgMatches) -> Result<(), EnzoError> {
-    utils::info("resolving src");
     let src = resolve_src(input.value_of("src").unwrap());
+    utils::info(format!("src = {}", src).as_str());
 
-    utils::info("resolving dst");
     let name = name_helper(
         input.value_of("src").unwrap(),
         input.value_of("name"),
         false,
     )?;
     let dst = resolve_dst(config, input.value_of("dst").unwrap(), name.as_str())?;
-    utils::info(format!("cloning {} into {:?}", src, dst).as_str());
+    utils::info(format!("dst = {:?}", dst).as_str());
+
+    utils::info("initiating clone");
     git::clone(src, &dst)?;
-    utils::success("");
+    utils::success("cloned");
     Ok(())
 }
 
