@@ -1,5 +1,5 @@
 use crate::utils;
-use crate::utils::error::{EnzoError, EnzoErrorType};
+use crate::utils::error::{EnzoError, EnzoErrorKind};
 use crate::workspace::{self, WorkspaceData, WorkspaceName};
 use ansi_term::Color;
 use serde::{Deserialize, Serialize};
@@ -19,12 +19,6 @@ pub struct Config {
     workspaces: HashMap<WorkspaceName, WorkspaceData>,
 }
 
-// initializes config data structure with path
-// if path does not exists
-//      prompts user to create a config file @path
-//      reads input from stdin
-// else
-//      read from file located at path
 impl TryFrom<&Path> for Config {
     type Error = EnzoError;
 
@@ -38,7 +32,7 @@ impl TryFrom<&Path> for Config {
         } else {
             let (name, data) = query_workspace()?;
             config.workspaces.insert(name, data);
-            // config.write() ; test if control-c will prevent drop from writing
+            config.write()?;
         }
         Ok(config)
     }
@@ -46,20 +40,28 @@ impl TryFrom<&Path> for Config {
 
 impl Config {
     fn read(&mut self) -> Result<(), EnzoError> {
+        if !self.path.exists() {
+            return Err(EnzoError::new(
+                format!("Configuration file does not exist in {:?}", self.path),
+                EnzoErrorKind::ConfigError,
+            ));
+        }
+
+        let mut file = File::open(self.path)?;
+        let mut buffer = String::new();
+        file.read_to_string(&mut buffer)?;
+        let Config { workspaces, .. } = serde_yaml::from_str(buffer.as_str())?;
+        self.workspaces = workspaces;
+
         Ok(())
     }
-    // pub fn new(path: &Path) -> Result<Config, EnzoError> {
-    //     if path.exists() {
-    //         // read from the file
-    //         //
-    //         // populate structs
-    //         //
-    //         // return config
-    //     } else {
-    //         // print warning
-    //         // prompt user to create a config file @path
-    //     };
-    // }
+
+    fn write(&mut self) -> Result<(), EnzoError> {
+        let mut file = File::create(self.path)?;
+        let s = serde_yaml::to_string(&self)?;
+        file.write_all(s.as_bytes())?;
+        Ok(())
+    }
 
     pub fn resolve_path(&self, path: String) -> Option<PathBuf> {
         let mut i = path.len();
@@ -77,7 +79,6 @@ impl Config {
                 i = path[..i].rfind("/").unwrap_or(0);
             }
         }
-
         None
     }
 
@@ -100,7 +101,7 @@ impl Config {
 
 impl Drop for Config {
     fn drop(&mut self) {
-        config.write();
+        self.write().unwrap();
     }
 }
 
@@ -110,92 +111,6 @@ fn print_warning(msg: String) {
         Color::Yellow.bold().paint("configuration warning:"),
         msg
     );
-}
-
-// TODO change from Box<dyn Error> to something that doesn't depend on dynamic dispatch
-pub fn read_config(name: &str) -> Result<Config, EnzoError> {
-    let mut config_file_path = utils::get_home_dir()?;
-    config_file_path.push(name);
-
-    if !config_file_path.exists() {
-        print_warning(format!("Couldn't find {}", Color::Blue.bold().paint(name)));
-        create_config_file(&config_file_path)?;
-    }
-
-    let mut file = match File::open(&config_file_path) {
-        Ok(handle) => handle,
-        Err(_) => {
-            // critical error, because the config file should've been made by now
-            return Err(EnzoError::new(
-                "Config file could not be opened",
-                EnzoErrorType::FatalError,
-                None,
-            ));
-        }
-    };
-
-    let mut buffer = String::new();
-
-    // TODO handle this error more gracefully
-    if let Err(e) = file.read_to_string(&mut buffer) {
-        return Err(EnzoError::new(
-            "Failed to read from config file",
-            EnzoErrorType::ConfigError,
-            Some(format!("{:?}", e)),
-        ));
-    }
-
-    let config = match serde_yaml::from_str(buffer.as_str()) {
-        Ok(config) => config,
-        Err(e) => {
-            return Err(EnzoError::new(
-                "Failed to deserialize config file.",
-                EnzoErrorType::ConfigError,
-                Some(format!("{:?}", e)),
-            ))
-        }
-    };
-
-    Ok(config)
-}
-
-fn create_config_file(path: &PathBuf) -> Result<File, EnzoError> {
-    let mut file = match File::create(path) {
-        Ok(handle) => handle,
-        Err(_) => {
-            return Err(EnzoError::new(
-                format!("Couldn't create config file in {:?}", path).as_str(),
-                EnzoErrorType::ConfigError,
-                None,
-            ));
-        }
-    };
-    let (name, data) = workspace::read_from_stdin()?;
-    let mut workspaces = HashMap::new();
-    workspaces.insert(name.clone(), data);
-
-    let config = Config::new(name, workspaces);
-
-    let s = match serde_yaml::to_string(&config) {
-        Ok(s) => s,
-        Err(e) => {
-            return Err(EnzoError::new(
-                "Failed to serialize config data.",
-                EnzoErrorType::ConfigError,
-                Some(format!("{:?}", e)),
-            ))
-        }
-    };
-
-    if let Err(_) = file.write(s.as_bytes()) {
-        return Err(EnzoError::new(
-            "Could not write config info to the configuration file",
-            EnzoErrorType::ConfigError,
-            None,
-        ));
-    }
-
-    Ok(file)
 }
 
 #[cfg(test)]

@@ -22,6 +22,12 @@ impl From<io::Error> for EnzoError {
     }
 }
 
+impl From<serde_yaml::Error> for EnzoError {
+    fn from(error: serde_yaml::Error) -> Self {
+        EnzoError::new(format!("{}", error), EnzoErrorKind::ParseError)
+    }
+}
+
 impl fmt::Display for EnzoError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}: {}", self.kind, self.msg)
@@ -36,6 +42,7 @@ pub enum EnzoErrorKind {
     IOError,
     ConfigError,
     GitError,
+    ParseError,
 }
 
 impl fmt::Display for EnzoErrorKind {
@@ -45,9 +52,9 @@ impl fmt::Display for EnzoErrorKind {
             EnzoErrorKind::IOError => Red.bold().paint("io error"),
             EnzoErrorKind::ConfigError => Yellow.bold().paint("configuration error"),
             EnzoErrorKind::GitError => Purple.bold().paint("git error"),
+            EnzoErrorKind::ParseError => Purple.bold().paint("parse error"),
         };
 
         write!(f, "{}", msg)
     }
 }
-
