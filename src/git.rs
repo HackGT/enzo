@@ -22,13 +22,13 @@ pub fn clone(src: String, dst: &Path) -> Result<(), EnzoError> {
         if let Err(e) = builder.clone(src.as_str(), dst) {
             Err(EnzoError::new(
                 format!(
-                    "Failed to clone {} into {}\ncause: {:?}",
+                    "Failed to clone {} into {}",
                     Color::Blue.bold().paint(src),
                     Color::Blue.bold().paint(dst.to_string_lossy()),
-                    e
                 )
                 .as_str(),
                 EnzoErrorType::GitError,
+                Some(format!("{:?}", e)),
             ))
         } else {
             Ok(())
@@ -37,6 +37,7 @@ pub fn clone(src: String, dst: &Path) -> Result<(), EnzoError> {
         Err(EnzoError::new(
             "Failed to obtain git credentials for protocol=https host=github.com",
             EnzoErrorType::GitError,
+            None,
         ))
     }
 }

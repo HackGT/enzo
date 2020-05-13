@@ -87,6 +87,7 @@ pub fn read_config(name: &str) -> Result<Config, EnzoError> {
             return Err(EnzoError::new(
                 "Config file could not be opened",
                 EnzoErrorType::FatalError,
+                None,
             ));
         }
     };
@@ -96,8 +97,9 @@ pub fn read_config(name: &str) -> Result<Config, EnzoError> {
     // TODO handle this error more gracefully
     if let Err(e) = file.read_to_string(&mut buffer) {
         return Err(EnzoError::new(
-            format!("Failed to read from config file. Cause: {:?}", e).as_str(),
+            "Failed to read from config file",
             EnzoErrorType::ConfigError,
+            Some(format!("{:?}", e)),
         ));
     }
 
@@ -105,8 +107,9 @@ pub fn read_config(name: &str) -> Result<Config, EnzoError> {
         Ok(config) => config,
         Err(e) => {
             return Err(EnzoError::new(
-                format!("Failed to deserialize config file. Cause: {:?}", e).as_str(),
+                "Failed to deserialize config file.",
                 EnzoErrorType::ConfigError,
+                Some(format!("{:?}", e)),
             ))
         }
     };
@@ -121,6 +124,7 @@ fn create_config_file(path: &PathBuf) -> Result<File, EnzoError> {
             return Err(EnzoError::new(
                 format!("Couldn't create config file in {:?}", path).as_str(),
                 EnzoErrorType::ConfigError,
+                None,
             ));
         }
     };
@@ -134,8 +138,9 @@ fn create_config_file(path: &PathBuf) -> Result<File, EnzoError> {
         Ok(s) => s,
         Err(e) => {
             return Err(EnzoError::new(
-                format!("Failed to serialize config data. Cause: {:?}", e).as_str(),
+                "Failed to serialize config data.",
                 EnzoErrorType::ConfigError,
+                Some(format!("{:?}", e)),
             ))
         }
     };
@@ -144,6 +149,7 @@ fn create_config_file(path: &PathBuf) -> Result<File, EnzoError> {
         return Err(EnzoError::new(
             "Could not write config info to the configuration file",
             EnzoErrorType::ConfigError,
+            None,
         ));
     }
 

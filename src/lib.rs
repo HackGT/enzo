@@ -17,6 +17,7 @@ pub fn clone(config: &mut config::Config, src: String, dst: String) -> Result<()
             None => return Err(EnzoError::new(
                 "Failed to parse the repo name. It should be of the format 'username/repo_name'",
                 EnzoErrorType::GitError,
+                None,
             )),
         };
 
@@ -34,6 +35,7 @@ pub fn clone(config: &mut config::Config, src: String, dst: String) -> Result<()
             return Err(EnzoError::new(
                 "Could not read workspace from stdin",
                 EnzoErrorType::FatalError,
+                None,
             ));
         }
     };

@@ -11,6 +11,7 @@ pub fn get_home_dir() -> Result<PathBuf, EnzoError> {
         None => Err(EnzoError::new(
             "Couldn't access the home directory",
             EnzoErrorType::FatalError,
+            None,
         )),
     }
 }
