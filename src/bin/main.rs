@@ -19,8 +19,8 @@ fn main() {
         .subcommand(
             App::new("clone")
                 .about("Clone a git repo into a workspace")
-                .arg(Arg::with_name("source").required(true))
-                .arg(Arg::with_name("destination").required(true))
+                .arg(Arg::with_name("src").required(true))
+                .arg(Arg::with_name("dst").required(true))
                 .arg(
                     Arg::with_name("path")
                         .help("do not resolve any workspace name to a path")
@@ -31,14 +31,15 @@ fn main() {
                     Arg::with_name("name")
                         .help("name of the new repo")
                         .short("n")
-                        .long("name"),
+                        .long("name")
+                        .takes_value(true),
                 ),
         )
         .subcommand(
             App::new("new")
                 .about("Clone a template repo into a workspace")
-                .arg(Arg::with_name("source").required(true))
-                .arg(Arg::with_name("destination").required(true))
+                .arg(Arg::with_name("src").required(true))
+                .arg(Arg::with_name("dst").required(true))
                 .arg(
                     Arg::with_name("path")
                         .help("do not resolve any workspace name to a path")
@@ -49,24 +50,15 @@ fn main() {
                     Arg::with_name("name")
                         .help("name of the new repo")
                         .short("n")
-                        .long("name"),
+                        .long("name")
+                        .takes_value(true),
                 ),
         )
         .get_matches();
 
     let res = match matches.subcommand() {
-        ("clone", Some(clone_matches)) => {
-            let src = clone_matches.value_of("source").unwrap();
-            let dst = clone_matches.value_of("destination").unwrap();
-
-            enzo::clone(&mut conf, src.to_string(), dst.to_string(), None)
-        }
-        ("new", Some(new_matches)) => {
-            let src = new_matches.value_of("source").unwrap();
-            let dst = new_matches.value_of("destination").unwrap();
-
-            enzo::new(&mut conf, src.to_string(), dst.to_string())
-        }
+        ("clone", Some(clone_matches)) => enzo::clone(&mut conf, clone_matches),
+        ("new", Some(new_matches)) => enzo::new(&mut conf, new_matches),
         ("", None) => Ok(()),
         _ => unreachable!(),
     };

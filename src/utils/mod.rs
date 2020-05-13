@@ -1,6 +1,7 @@
 pub mod error;
 
 use ansi_term::Color;
+use clap::ArgMatches;
 use dirs::home_dir;
 use error::{EnzoError, EnzoErrorType};
 use std::path::PathBuf;
@@ -33,4 +34,15 @@ pub fn query(question: &str, default: Option<&str>, pre: Option<&str>) -> String
             String::new()
         }
     )
+}
+
+pub fn get<'a>(key: &'a str, input: &'a ArgMatches) -> Result<&'a str, EnzoError> {
+    match input.value_of(key) {
+        Some(val) => Ok(val),
+        None => Err(EnzoError::new(
+            format!("Could not obtain {} from arg matches", key).as_str(),
+            EnzoErrorType::FatalError,
+            None,
+        )),
+    }
 }
