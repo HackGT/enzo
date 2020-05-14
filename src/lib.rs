@@ -66,10 +66,11 @@ fn name_helper<'a>(
 
 pub fn new(config: &mut config::Config, input: &ArgMatches) -> Result<(), EnzoError> {
     let src = resolve_src(input.value_of("src").unwrap());
-    utils::info(format!("src = {}", src).as_str());
 
     let name = name_helper(input.value_of("src").unwrap(), input.value_of("name"), true)?;
     let mut dst = resolve_dst(config, input.value_of("dst").unwrap(), name.as_str())?;
+
+    utils::info(format!("src = {}", src).as_str());
     utils::info(format!("dst = {:?}", dst).as_str());
 
     utils::info("initiating clone");
@@ -89,7 +90,6 @@ pub fn new(config: &mut config::Config, input: &ArgMatches) -> Result<(), EnzoEr
 
 pub fn clone(config: &mut config::Config, input: &ArgMatches) -> Result<(), EnzoError> {
     let src = resolve_src(input.value_of("src").unwrap());
-    utils::info(format!("src = {}", src).as_str());
 
     let name = name_helper(
         input.value_of("src").unwrap(),
@@ -97,6 +97,8 @@ pub fn clone(config: &mut config::Config, input: &ArgMatches) -> Result<(), Enzo
         false,
     )?;
     let dst = resolve_dst(config, input.value_of("dst").unwrap(), name.as_str())?;
+
+    utils::info(format!("src = {}", src).as_str());
     utils::info(format!("dst = {:?}", dst).as_str());
 
     utils::info("initiating clone");

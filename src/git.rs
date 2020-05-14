@@ -34,8 +34,6 @@ pub fn clone(src: String, dst: &Path) -> Result<(), EnzoError> {
     }
 }
 
-// TODO better error handling and messages
-// TODO more readable code and variable names
 fn get_git_credentials(protocol: &str, host: &str) -> Option<(String, String)> {
     let input_str = format!("protocol={}\nhost={}\n\n", protocol, host);
     let mut child = Command::new("git")
@@ -70,3 +68,4 @@ fn get_git_credentials(protocol: &str, host: &str) -> Option<(String, String)> {
         None
     }
 }
+
