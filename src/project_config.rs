@@ -11,7 +11,7 @@ struct ProjectConfig {
 }
 
 impl ProjectConfig {
-    pub fn read(&mut self, path: PathBuf) -> Result<(), EnzoError> {
+    fn read(&mut self, path: PathBuf) -> Result<(), EnzoError> {
         let mut file = File::open(path)?;
         let mut buffer = String::new();
         file.read_to_string(&mut buffer)?;
@@ -20,7 +20,7 @@ impl ProjectConfig {
         Ok(())
     }
 
-    pub fn write(&mut self, path: PathBuf) -> Result<(), EnzoError> {
+    fn write(&mut self, path: PathBuf) -> Result<(), EnzoError> {
         let mut file = File::open(path)?;
         let s = serde_yaml::to_string(&self)?;
         file.write_all(s.as_bytes())?;

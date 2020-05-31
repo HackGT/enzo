@@ -15,6 +15,13 @@ pub struct Config {
     workspaces: HashMap<WorkspaceName, WorkspaceData>,
 }
 
+impl TryFrom<&[u8]> for Config {
+    type Error = EnzoError;
+    fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+        Ok(serde_yaml::from_slice(bytes)?)
+    }
+}
+
 impl TryFrom<&Path> for Config {
     type Error = EnzoError;
 
@@ -46,6 +53,19 @@ impl TryFrom<&Path> for Config {
         Ok(config)
     }
 }
+
+// want to test the serialization and deserialization
+//
+// Config::from(path) -> Config
+// file.write(config)
+//
+// got an idea
+//      
+//      implement From<&[u8]> for Config
+//      implement From<Path> for Config
+//
+//  to read the config => Config::from(path) -> Config
+//  to write the config to a file => file.write(config.into())
 
 impl Config {
     pub fn read(&mut self) -> Result<(), EnzoError> {
