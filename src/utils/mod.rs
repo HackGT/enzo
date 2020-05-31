@@ -26,22 +26,26 @@ pub fn get<'a>(key: &'a str, input: &'a ArgMatches) -> Result<&'a str, EnzoError
     }
 }
 
-pub fn warning(msg: &str) {
+pub fn warning<T: AsRef<str>>(msg: T) {
     println!(
         "{} {}",
         ansi_term::Color::Yellow.bold().paint("[warning]"),
-        msg
+        msg.as_ref()
     );
 }
 
-pub fn info(msg: &str) {
-    println!("{} {}", ansi_term::Color::Blue.bold().paint("[info]"), msg)
+pub fn info<T: AsRef<str>>(msg: T) {
+    println!(
+        "{} {}",
+        ansi_term::Color::Blue.bold().paint("[info]"),
+        msg.as_ref()
+    )
 }
 
-pub fn success(msg: &str) {
+pub fn success<T: AsRef<str>>(msg: T) {
     println!(
         "{} {} 🎉",
         ansi_term::Color::Green.bold().paint("[success]"),
-        msg
+        msg.as_ref()
     )
 }

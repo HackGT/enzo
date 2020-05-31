@@ -11,8 +11,11 @@ pub struct EnzoError {
 }
 
 impl EnzoError {
-    pub fn new(msg: String, kind: EnzoErrorKind) -> EnzoError {
-        EnzoError { msg, kind }
+    pub fn new<T>(msg: T, kind: EnzoErrorKind) -> EnzoError 
+    where
+        T: Into<String>
+    {
+        EnzoError { msg: msg.into(), kind }
     }
 }
 

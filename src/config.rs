@@ -1,6 +1,5 @@
-use crate::utils;
 use crate::utils::error::{EnzoError, EnzoErrorKind};
-use crate::workspace::{self, WorkspaceData, WorkspaceName};
+use crate::workspace::{WorkspaceData, WorkspaceName};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::convert::TryFrom;
@@ -9,68 +8,29 @@ use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 
 // TODO remove the path from this struct; it is not necessary
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Config {
-    path: PathBuf,
     workspaces: HashMap<WorkspaceName, WorkspaceData>,
 }
 
-impl TryFrom<&Path> for Config {
+impl TryFrom<PathBuf> for Config {
     type Error = EnzoError;
 
-    fn try_from(path: &Path) -> Result<Self, Self::Error> {
-        let mut config = Config {
-            path: path.to_path_buf(),
-            workspaces: HashMap::new(),
-        };
+    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
         if path.exists() {
-            config.read()?;
+            let mut file = File::open(path)?;
+            let mut buffer = String::new();
+            file.read_to_string(&mut buffer)?;
+            let config = serde_yaml::from_str(&buffer)?;
+            Ok(config)
         } else {
-            utils::warning(
-                format!(
-                    "could not find {}\n",
-                    ansi_term::Color::Blue.paint(".enzo.config.yaml")
-                )
-                .as_str(),
-            );
-
-            utils::info("enzo will create one for you\n");
-
-            let (name, data) = workspace::query_workspace()?;
-            config.workspaces.insert(name, data);
-
-            utils::info("processing");
-            config.write()?;
-            utils::success("data written to .enzo.config.yaml");
+            let msg = format!("Could not find `enzo.config.yaml` at {:?}", path);
+            Err(EnzoError::new(msg, EnzoErrorKind::ConfigError))
         }
-        Ok(config)
     }
 }
 
 impl Config {
-    pub fn read(&mut self) -> Result<(), EnzoError> {
-        if !self.path.exists() {
-            return Err(EnzoError::new(
-                format!("Configuration file does not exist in {:?}", self.path),
-                EnzoErrorKind::ConfigError,
-            ));
-        }
-
-        let mut file = File::open(&self.path)?;
-        let mut buffer = String::new();
-        file.read_to_string(&mut buffer)?;
-        let Config { ref workspaces, .. } = serde_yaml::from_str(buffer.as_str())?;
-        self.workspaces = workspaces.clone();
-        Ok(())
-    }
-
-    pub fn write(&mut self) -> Result<(), EnzoError> {
-        let mut file = File::create(&self.path)?;
-        let s = serde_yaml::to_string(&self)?;
-        file.write_all(s.as_bytes())?;
-        Ok(())
-    }
-
     pub fn add(&mut self, name: String, data: WorkspaceData) -> Option<WorkspaceData> {
         self.workspaces.insert(WorkspaceName(name), data)
     }
@@ -91,7 +51,11 @@ impl Config {
         }
     }
 
-    pub fn resolve_path(&self, path: String) -> Option<PathBuf> {
+    fn get_workspace_data(&self, name: &str) -> Option<&WorkspaceData> {
+        self.workspaces.get(&WorkspaceName(name.to_string()))
+    }
+
+    pub fn resolve_path(&self, path: &str) -> Option<(WorkspaceName, PathBuf)> {
         let mut i = path.len();
         if path.ends_with("/") {
             i = i - 1;
@@ -102,7 +66,7 @@ impl Config {
                 if path[i..].len() > 0 {
                     resolved_path.push(&path[i + 1..]);
                 }
-                return Some(resolved_path);
+                return Some((WorkspaceName(path[..i].to_string()), resolved_path));
             } else {
                 i = path[..i].rfind("/").unwrap_or(0);
             }
@@ -110,8 +74,9 @@ impl Config {
         None
     }
 
-    fn get_workspace_data(&self, name: &str) -> Option<&WorkspaceData> {
-        self.workspaces.get(&WorkspaceName(name.to_string()))
+    pub fn to_string(&self) -> Result<String, EnzoError> {
+        let s = serde_yaml::to_string(&self)?;
+        Ok(s)
     }
 }
 
@@ -123,14 +88,11 @@ mod test {
     fn resolve_path_none() {
         let workspaces = HashMap::new();
 
-        let config = Config {
-            path: PathBuf::new(),
-            workspaces,
-        };
+        let config = Config { workspaces };
 
-        assert_eq!(config.resolve_path("hackgt".to_string()), None);
-        assert_eq!(config.resolve_path("".to_string()), None);
-        assert_eq!(config.resolve_path("/".to_string()), None);
+        assert_eq!(config.resolve_path("hackgt"), None);
+        assert_eq!(config.resolve_path(""), None);
+        assert_eq!(config.resolve_path("/"), None);
     }
 
     #[test]
@@ -150,33 +112,30 @@ mod test {
             );
         }
 
-        let config = Config {
-            path: PathBuf::new(),
-            workspaces,
-        };
+        let config = Config { workspaces };
 
         assert_eq!(
-            config.resolve_path("hackgt".to_string()),
+            config.resolve_path("hackgt"),
             Some(PathBuf::from("dev/hackgt"))
         );
         assert_eq!(
-            config.resolve_path("hackgt/".to_string()),
+            config.resolve_path("hackgt/"),
             Some(PathBuf::from("dev/hackgt"))
         );
         assert_eq!(
-            config.resolve_path("hackgt.websites".to_string()),
+            config.resolve_path("hackgt.websites"),
             Some(PathBuf::from("dev/hackgt/websites"))
         );
         assert_eq!(
-            config.resolve_path("hackgt.websites/horizons".to_string()),
+            config.resolve_path("hackgt.websites/horizons"),
             Some(PathBuf::from("dev/hackgt/websites/horizons"))
         );
         assert_eq!(
-            config.resolve_path("college/sophomore/fall2018/".to_string()),
+            config.resolve_path("college/sophomore/fall2018/"),
             Some(PathBuf::from("life/teen/college/sophomore/fall2018"))
         );
         assert_eq!(
-            config.resolve_path("college/hw/cs2110/prj1".to_string()),
+            config.resolve_path("college/hw/cs2110/prj1"),
             Some(PathBuf::from("work/college/more_work/hw/cs2110/prj1"))
         );
     }
