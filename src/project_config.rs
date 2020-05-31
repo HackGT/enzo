@@ -19,11 +19,4 @@ impl ProjectConfig {
         self.todos = todos.clone();
         Ok(())
     }
-
-    fn write(&mut self, path: PathBuf) -> Result<(), EnzoError> {
-        let mut file = File::open(path)?;
-        let s = serde_yaml::to_string(&self)?;
-        file.write_all(s.as_bytes())?;
-        Ok(())
-    }
 }

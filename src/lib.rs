@@ -82,6 +82,7 @@ pub fn new(config: &mut config::Config, input: &ArgMatches) -> Result<(), EnzoEr
     dst.push(".git");
     fs::remove_dir_all(&dst)?;
     dst.pop();
+
     utils::info("running git init");
     // TODO write from git2 errors
     git2::Repository::init(dst).unwrap();
