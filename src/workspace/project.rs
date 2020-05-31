@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use crate::workspace::todo::Todo;
+use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
@@ -11,3 +11,13 @@ pub struct Project {
     todos: Vec<Todo>,
 }
 
+impl Project {
+    pub fn new(path: PathBuf, src: String, todos: Vec<Todo>) -> Self {
+        Self {
+            name: String::from("dummy name"),
+            path,
+            src,
+            todos,
+        }
+    }
+}

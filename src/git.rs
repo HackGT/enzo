@@ -6,7 +6,7 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 
 // TODO add fallbacks if credential fetching fails
-pub fn clone(src: String, dst: &Path) -> Result<(), EnzoError> {
+pub fn clone(src: &str, dst: &Path) -> Result<(), EnzoError> {
     utils::info("cloning");
 
     if let Some((username, password)) = get_git_credentials("https", "github.com") {
@@ -21,7 +21,7 @@ pub fn clone(src: String, dst: &Path) -> Result<(), EnzoError> {
         let mut builder = RepoBuilder::new();
         builder.fetch_options(fo);
 
-        if let Err(e) = builder.clone(src.as_str(), dst) {
+        if let Err(e) = builder.clone(src, dst) {
             Err(EnzoError::new(
                 format!("{}", e.message()),
                 EnzoErrorKind::GitError,

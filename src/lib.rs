@@ -10,9 +10,10 @@ pub mod utils;
 pub mod workspace;
 
 use config::Config;
+use project_config::ProjectConfig;
 use std::path::PathBuf;
 use utils::error::{EnzoError, EnzoErrorKind};
-use workspace::WorkspaceName;
+use workspace::{project::Project, WorkspaceName};
 
 pub fn resolve_src(src: &str) -> Result<String, EnzoError> {
     let src = format!("{}/{}.git", "https://github.com", src);
@@ -23,7 +24,6 @@ pub fn resolve_src(src: &str) -> Result<String, EnzoError> {
 pub fn resolve_dst(config: &mut Config, dst: &str) -> Result<(WorkspaceName, PathBuf), EnzoError> {
     // dst -> hackgt/websites
     if let Some(tuple) = config.resolve_path(dst) {
-        utils::info(format!("dst = {:?}", tuple.1));
         Ok(tuple)
     } else {
         let msg = format!("The name {} could not be resolved to a workspace.\nhint: Try creating a new workspace with `enzo add workspace`", dst);
@@ -45,35 +45,20 @@ pub fn clone(config: &mut Config, src: &str, dst: &str) -> Result<(), EnzoError>
     let src = resolve_src(src)?;
     let (workspace_name, mut dst) = resolve_dst(config, dst)?;
     dst.push(repo_name);
+    utils::info(format!("dst = {:?}", dst));
 
-    git::clone(src, &dst)?;
-    config.add_project(workspace_name, dst)?;
+    git::clone(&src, &dst)?;
+    // read todos from project_config file
+    // add a new project to enzo
+    dst.push("enzo.yaml");
+    let mut prg_conf = ProjectConfig { todos: vec![] };
+    prg_conf.read(&dst)?;
+
+    config.add_project(workspace_name, Project::new(dst, src, prg_conf.todos));
 
     Ok(())
 }
 
-// fn resolve_src(src: &str) -> String {
-//     // TODO more robust src resolution
-//     format!("{}/{}.git", "https://github.com", src)
-// }
-//
-// fn resolve_dst(config: &mut config::Config, dst: &str, name: &str) -> Result<PathBuf, EnzoError> {
-//     let res = config.resolve_path(dst.to_string());
-//     let mut dst = match res {
-//         Some(base_path) => base_path,
-//         None => {
-//             let (name, data) = workspace::query_workspace()?;
-//             let path = data.path.clone();
-//             config.add(name.0, data);
-//             path
-//         }
-//     };
-//
-//     dst.push(name);
-//
-//     Ok(dst)
-// }
-//
 // fn read_name_from_stdin() -> Result<String, EnzoError> {
 //     let name = input::<String>()
 //         .msg(format!("{}", Question::new_question("Name of the repo")))

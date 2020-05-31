@@ -2,10 +2,10 @@ pub mod project;
 pub mod todo;
 
 use crate::utils::{self, query::Question};
+use crate::workspace::project::Project;
 use read_input::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use crate::workspace::project::Project;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WorkspaceData {

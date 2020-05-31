@@ -1,11 +1,11 @@
 use crate::utils::error::{EnzoError, EnzoErrorKind};
-use crate::workspace::{WorkspaceData, WorkspaceName};
+use crate::workspace::{project::Project, WorkspaceData, WorkspaceName};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fs::File;
 use std::io::prelude::*;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 // TODO remove the path from this struct; it is not necessary
 #[derive(Default, Debug, Serialize, Deserialize)]
@@ -77,6 +77,14 @@ impl Config {
     pub fn to_string(&self) -> Result<String, EnzoError> {
         let s = serde_yaml::to_string(&self)?;
         Ok(s)
+    }
+
+    pub fn add_project(&mut self, name: WorkspaceName, project: Project) {
+        self.workspaces
+            .get_mut(&name)
+            .unwrap()
+            .projects
+            .push(project);
     }
 }
 

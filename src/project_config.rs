@@ -6,12 +6,12 @@ use std::io::prelude::*;
 use std::path::PathBuf;
 
 #[derive(Debug, Serialize, Deserialize)]
-struct ProjectConfig {
-    todos: Vec<Todo>,
+pub struct ProjectConfig {
+    pub todos: Vec<Todo>,
 }
 
 impl ProjectConfig {
-    fn read(&mut self, path: PathBuf) -> Result<(), EnzoError> {
+    pub fn read(&mut self, path: &PathBuf) -> Result<(), EnzoError> {
         let mut file = File::open(path)?;
         let mut buffer = String::new();
         file.read_to_string(&mut buffer)?;
