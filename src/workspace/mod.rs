@@ -5,15 +5,16 @@ use crate::utils::{self, query::Question};
 use read_input::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use crate::workspace::project::Project;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WorkspaceData {
     pub path: PathBuf,
-    pub projects: Vec<String>,
+    pub projects: Vec<Project>,
 }
 
 impl WorkspaceData {
-    pub fn new(path: PathBuf, projects: Vec<String>) -> WorkspaceData {
+    pub fn new(path: PathBuf, projects: Vec<Project>) -> WorkspaceData {
         WorkspaceData { path, projects }
     }
 }

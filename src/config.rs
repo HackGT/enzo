@@ -8,6 +8,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 
+// TODO remove the path from this struct; it is not necessary
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     path: PathBuf,

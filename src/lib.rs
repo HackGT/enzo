@@ -1,6 +1,7 @@
 pub mod config;
-mod git;
 pub mod utils;
+mod git;
+mod project_config;
 mod workspace;
 
 use clap::ArgMatches;
