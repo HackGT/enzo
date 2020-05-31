@@ -1,5 +1,5 @@
 pub mod config;
-pub mod git;
+mod git;
 pub mod utils;
 mod workspace;
 
