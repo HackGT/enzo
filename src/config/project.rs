@@ -1,10 +1,11 @@
+use crate::todos::todo::Todo;
 use crate::utils::error::EnzoError;
-use crate::workspace::todo::Todo;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
 
+// TODO: Remove this nasty read function, and make this not in charge of file io
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProjectConfig {
     pub todos: Vec<Todo>,

@@ -38,7 +38,7 @@ pub fn clone(src: &str, dst: &Path) -> Result<(), EnzoError> {
     }
 }
 
-pub fn init(target: &Path) -> Result<(), EnzoError> {
+pub fn _init(_target: &Path) -> Result<(), EnzoError> {
     Ok(())
 }
 

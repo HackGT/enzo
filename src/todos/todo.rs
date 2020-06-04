@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Todo {
-    name: String,
+    pub name: String,
     completed: Option<bool>,
 }
 

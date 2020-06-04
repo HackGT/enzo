@@ -1,6 +1,6 @@
 use clap::{App, Arg};
 use enzo::{
-    config::Config,
+    config::global::Config,
     utils,
     utils::error::{EnzoError, EnzoErrorKind},
     workspace,
@@ -62,13 +62,14 @@ fn main() -> Result<(), EnzoError> {
                         .takes_value(true),
                 ),
         )
+        .subcommand(App::new("todos").about("Manage your todos"))
         .get_matches();
 
     let res = match matches.subcommand() {
         ("add", Some(add_matches)) => match add_matches.value_of("entity") {
             Some("workspace") => {
                 let (name, data) = workspace::query_workspace()?;
-                config.add(name.0, data);
+                config.add_workspace(name, data.path);
                 Ok(())
             }
             Some("todo") => unimplemented!(),
@@ -86,6 +87,7 @@ fn main() -> Result<(), EnzoError> {
             let dst = clone_matches.value_of("dst").unwrap();
             enzo::clone(&mut config, src, dst)
         }
+        ("todos", _) => enzo::start_task_manager(&mut config),
         _ => unreachable!(),
     };
     if let Err(e) = res {

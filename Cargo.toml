@@ -14,4 +14,7 @@ read_input = "0.8.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 git2 = "0.13"
-
+crossterm = { version = "0.17", features = ['event-stream'] }
+tui = { version = "0.9", default-features = false, features = ['crossterm'] }
+tokio = { version = "0.2", features = ["full"] }
+futures = "0.3"

@@ -1,5 +1,4 @@
 pub mod project;
-pub mod todo;
 
 use crate::utils::{self, query::Question};
 use crate::workspace::project::Project;
@@ -21,6 +20,18 @@ impl WorkspaceData {
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct WorkspaceName(pub String);
+
+impl From<String> for WorkspaceName {
+    fn from(name: String) -> Self {
+        WorkspaceName(name)
+    }
+}
+
+impl From<&str> for WorkspaceName {
+    fn from(name: &str) -> Self {
+        WorkspaceName(name.to_string())
+    }
+}
 
 pub fn query_workspace() -> Result<(WorkspaceName, WorkspaceData), utils::error::EnzoError> {
     let name = input::<String>()

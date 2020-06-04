@@ -11,11 +11,14 @@ pub struct EnzoError {
 }
 
 impl EnzoError {
-    pub fn new<T>(msg: T, kind: EnzoErrorKind) -> EnzoError 
+    pub fn new<T>(msg: T, kind: EnzoErrorKind) -> EnzoError
     where
-        T: Into<String>
+        T: Into<String>,
     {
-        EnzoError { msg: msg.into(), kind }
+        EnzoError {
+            msg: msg.into(),
+            kind,
+        }
     }
 }
 
@@ -28,6 +31,12 @@ impl From<io::Error> for EnzoError {
 impl From<serde_yaml::Error> for EnzoError {
     fn from(error: serde_yaml::Error) -> Self {
         EnzoError::new(format!("{}", error), EnzoErrorKind::ParseError)
+    }
+}
+
+impl From<crossterm::ErrorKind> for EnzoError {
+    fn from(error: crossterm::ErrorKind) -> Self {
+        EnzoError::new(format!("{:?}", error), EnzoErrorKind::TerminalError)
     }
 }
 
@@ -46,6 +55,7 @@ pub enum EnzoErrorKind {
     ConfigError,
     GitError,
     ParseError,
+    TerminalError,
 }
 
 impl fmt::Display for EnzoErrorKind {
@@ -56,6 +66,7 @@ impl fmt::Display for EnzoErrorKind {
             EnzoErrorKind::ConfigError => Yellow.bold().paint("configuration error"),
             EnzoErrorKind::GitError => Purple.bold().paint("git error"),
             EnzoErrorKind::ParseError => Purple.bold().paint("parse error"),
+            EnzoErrorKind::TerminalError => Purple.bold().paint("terminal error"),
         };
 
         write!(f, "{}", msg)

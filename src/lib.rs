@@ -1,16 +1,10 @@
-// this is just a library
-// It shouldn't be dependent on clap or any binary related dependency
-//
-// it should merely expose an API that the binary can use to wield its magic
-
 pub mod config;
 mod git;
-mod project_config;
+mod todos;
 pub mod utils;
 pub mod workspace;
 
-use config::Config;
-use project_config::ProjectConfig;
+use config::{global::Config, project::ProjectConfig};
 use std::path::PathBuf;
 use utils::error::{EnzoError, EnzoErrorKind};
 use workspace::{project::Project, WorkspaceName};
@@ -22,11 +16,11 @@ pub fn resolve_src(src: &str) -> Result<String, EnzoError> {
 }
 
 pub fn resolve_dst(config: &mut Config, dst: &str) -> Result<(WorkspaceName, PathBuf), EnzoError> {
-    // dst -> hackgt/websites
     if let Some(tuple) = config.resolve_path(dst) {
         Ok(tuple)
     } else {
         let msg = format!("The name {} could not be resolved to a workspace.\nhint: Try creating a new workspace with `enzo add workspace`", dst);
+        // TODO fix the error kind
         Err(EnzoError::new(msg, EnzoErrorKind::ConfigError))
     }
 }
@@ -48,15 +42,22 @@ pub fn clone(config: &mut Config, src: &str, dst: &str) -> Result<(), EnzoError>
     utils::info(format!("dst = {:?}", dst));
 
     git::clone(&src, &dst)?;
-    // read todos from project_config file
-    // add a new project to enzo
-    dst.push("enzo.yaml");
-    let mut prg_conf = ProjectConfig { todos: vec![] };
-    prg_conf.read(&dst)?;
 
-    config.add_project(workspace_name, Project::new(dst, src, prg_conf.todos));
+    dst.push("enzo.yaml");
+    let todos = todos::read_from(&dst)?;
+
+    dst.pop();
+    // TODO handle error more gracefully
+    let name = dst.file_name().unwrap();
+    let project = Project::new(name.to_str().unwrap().into(), workspace_name, src, todos);
+
+    config.add_project(dst, project);
 
     Ok(())
+}
+
+pub fn start_task_manager(_config: &mut Config) -> Result<(), EnzoError> {
+    todos::start()
 }
 
 // fn read_name_from_stdin() -> Result<String, EnzoError> {
@@ -89,54 +90,6 @@ pub fn clone(config: &mut Config, src: &str, dst: &str) -> Result<(), EnzoError>
 //     };
 //
 //     Ok(name)
-// }
-
-// pub fn new(config: &mut config::Config, input: &ArgMatches) -> Result<(), EnzoError> {
-//     let src = resolve_src(input.value_of("src").unwrap());
-//
-//     let name = name_helper(input.value_of("src").unwrap(), input.value_of("name"), true)?;
-//     let mut dst = resolve_dst(config, input.value_of("dst").unwrap(), name.as_str())?;
-//
-//     utils::info(format!("src = {}", src).as_str());
-//     utils::info(format!("dst = {:?}", dst).as_str());
-//
-//     git::clone(src, &dst)?;
-//
-//     utils::info("removing the .git directory");
-//
-//     dst.push(".git");
-//     fs::remove_dir_all(&dst)?;
-//     dst.pop();
-//
-//     utils::info("running git init");
-//
-//     git2::Repository::init(dst).unwrap();
-//
-//     utils::success("git repo initialized");
-//
-//     // read the repo config file
-//     // transfer todos from project config to repo config
-//     // done!
-//     Ok(())
-// }
-//
-// pub fn clone(config: &mut config::Config, input: &ArgMatches) -> Result<(), EnzoError> {
-//     let src = resolve_src(input.value_of("src").unwrap());
-//
-//     let name = name_helper(
-//         input.value_of("src").unwrap(),
-//         input.value_of("name"),
-//         false,
-//     )?;
-//     let dst = resolve_dst(config, input.value_of("dst").unwrap(), name.as_str())?;
-//
-//     utils::info(format!("src = {}", src).as_str());
-//     utils::info(format!("dst = {:?}", dst).as_str());
-//
-//     utils::info("initiating clone");
-//     git::clone(src, &dst)?;
-//     utils::success("cloned");
-//     Ok(())
 // }
 
 fn get_repo_name<'a>(src: &'a str) -> Option<&'a str> {
