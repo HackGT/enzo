@@ -12,7 +12,7 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
         .split(f.size());
-    let items = app.items.items.iter().map(|i| Text::raw(i.name.clone()));
+    let items = app.todos.iter().map(|i| Text::raw(i.name.clone()));
 
     let style = Style::default().fg(Color::Black).bg(Color::White);
 
@@ -21,5 +21,5 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .style(style)
         .highlight_style(style.fg(Color::LightGreen).modifier(Modifier::BOLD))
         .highlight_symbol(">");
-    f.render_stateful_widget(items, chunks[0], &mut app.items.state);
+    f.render_stateful_widget(items, chunks[0], &mut app.state);
 }

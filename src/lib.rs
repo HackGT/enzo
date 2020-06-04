@@ -4,7 +4,7 @@ mod todos;
 pub mod utils;
 pub mod workspace;
 
-use config::{global::Config, project::ProjectConfig};
+use config::global::Config;
 use std::path::PathBuf;
 use utils::error::{EnzoError, EnzoErrorKind};
 use workspace::{project::Project, WorkspaceName};
@@ -56,8 +56,12 @@ pub fn clone(config: &mut Config, src: &str, dst: &str) -> Result<(), EnzoError>
     Ok(())
 }
 
-pub fn start_task_manager(_config: &mut Config) -> Result<(), EnzoError> {
-    todos::start()
+pub fn start_task_manager<'a>(config: &'a mut Config) -> Result<(), EnzoError> {
+    // todos::start()
+    let project = config.get_project_mut(&std::env::current_dir()?).unwrap();
+    let todos = &mut project.todos;
+    todos::start(todos)?;
+    Ok(())
 }
 
 // fn read_name_from_stdin() -> Result<String, EnzoError> {

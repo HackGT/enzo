@@ -3,8 +3,8 @@ pub mod todo;
 mod ui;
 
 use crate::config::project::ProjectConfig;
-use crate::utils::error::EnzoError;
-use app::{App, StatefulList};
+use crate::utils::error::{EnzoError, EnzoErrorKind};
+use app::App;
 use crossterm::{
     event::{EnableMouseCapture, Event, EventStream, KeyCode},
     execute,
@@ -21,7 +21,7 @@ use tui::{
     Terminal,
 };
 
-pub fn start() -> Result<(), EnzoError> {
+pub fn start<'a>(todos: &'a mut Vec<Todo>) -> Result<(), EnzoError> {
     let mut stdout = stdout();
     enable_raw_mode()?;
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
@@ -30,13 +30,7 @@ pub fn start() -> Result<(), EnzoError> {
     let mut terminal = Terminal::new(backend)?;
     terminal.clear()?;
 
-    let mut app = App {
-        items: StatefulList::with_items(vec![
-            Todo::new("study".to_string()),
-            Todo::new("have a break".to_string()),
-            Todo::new("perhaps not have a break".to_string()),
-        ]),
-    };
+    let mut app = App::with_todos(todos);
 
     block_on(event_listener(&mut terminal, &mut app));
 
@@ -44,7 +38,21 @@ pub fn start() -> Result<(), EnzoError> {
     Ok(())
 }
 
-async fn event_listener<T: Backend>(terminal: &mut Terminal<T>, app: &mut App) {
+pub fn read_from(path: &PathBuf) -> Result<Vec<Todo>, EnzoError> {
+    if !path.exists() {
+        return Err(EnzoError::new(
+            format!("{:?} does not exist", path),
+            EnzoErrorKind::IOError,
+        ));
+    }
+    let mut file = File::open(path)?;
+    let mut buffer = String::new();
+    file.read_to_string(&mut buffer)?;
+    let ProjectConfig { todos, .. } = serde_yaml::from_str(buffer.as_str())?;
+    Ok(todos)
+}
+
+async fn event_listener<T: Backend>(terminal: &mut Terminal<T>, app: &mut App<'_>) {
     let mut reader = EventStream::new();
 
     terminal.draw(|mut f| ui::draw(&mut f, app));
@@ -54,7 +62,7 @@ async fn event_listener<T: Backend>(terminal: &mut Terminal<T>, app: &mut App) {
                 if event == Event::Key(KeyCode::Char('q').into()) {
                     break;
                 } else if event == Event::Key(KeyCode::Down.into()) {
-                    app.items.next();
+                    // app.items.next();
                 } else {
                     println!("this is an event\r");
                 }
@@ -63,12 +71,4 @@ async fn event_listener<T: Backend>(terminal: &mut Terminal<T>, app: &mut App) {
         }
         terminal.draw(|mut f| ui::draw(&mut f, app));
     }
-}
-
-pub fn read_from(path: &PathBuf) -> Result<Vec<Todo>, EnzoError> {
-    let mut file = File::open(path)?;
-    let mut buffer = String::new();
-    file.read_to_string(&mut buffer)?;
-    let ProjectConfig { todos, .. } = serde_yaml::from_str(buffer.as_str())?;
-    Ok(todos)
 }

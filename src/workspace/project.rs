@@ -8,7 +8,7 @@ pub struct Project {
     name: String,
     src: String,
     workspace: WorkspaceName,
-    todos: Vec<Todo>,
+    pub todos: Vec<Todo>,
 }
 
 impl Project {
