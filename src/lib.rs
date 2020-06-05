@@ -56,9 +56,15 @@ pub fn clone(config: &mut Config, src: &str, dst: &str) -> Result<(), EnzoError>
     Ok(())
 }
 
-pub fn start_task_manager<'a>(config: &'a mut Config) -> Result<(), EnzoError> {
-    // todos::start()
-    let project = config.get_project_mut(&std::env::current_dir()?).unwrap();
+pub fn start_task_manager<'a>(config: &'a mut Config, src: Option<&str>) -> Result<(), EnzoError> {
+    let path = if let Some(src) = src {
+        let (_, dst) = resolve_dst(config, src)?;
+        utils::info(format!("src = {:?}", dst));
+        dst
+    } else {
+        std::env::current_dir()?
+    };
+    let project = config.get_project_mut(&path).unwrap();
     let todos = &mut project.todos;
     todos::start(todos)?;
     Ok(())

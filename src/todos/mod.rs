@@ -32,7 +32,7 @@ pub fn start<'a>(todos: &'a mut Vec<Todo>) -> Result<(), EnzoError> {
 
     let mut app = App::with_todos(todos);
 
-    block_on(event_listener(&mut terminal, &mut app));
+    block_on(event_listener(&mut terminal, &mut app))?;
 
     disable_raw_mode()?;
     Ok(())
@@ -52,23 +52,29 @@ pub fn read_from(path: &PathBuf) -> Result<Vec<Todo>, EnzoError> {
     Ok(todos)
 }
 
-async fn event_listener<T: Backend>(terminal: &mut Terminal<T>, app: &mut App<'_>) {
+async fn event_listener<T: Backend>(
+    terminal: &mut Terminal<T>,
+    app: &mut App<'_>,
+) -> Result<(), EnzoError> {
     let mut reader = EventStream::new();
 
-    terminal.draw(|mut f| ui::draw(&mut f, app));
+    terminal.draw(|mut f| ui::draw(&mut f, app))?;
     while let Some(event) = reader.next().await {
         match event {
             Ok(event) => {
                 if event == Event::Key(KeyCode::Char('q').into()) {
                     break;
                 } else if event == Event::Key(KeyCode::Down.into()) {
-                    // app.items.next();
+                    app.next();
+                } else if event == Event::Key(KeyCode::Up.into()) {
+                    app.previous();
                 } else {
                     println!("this is an event\r");
                 }
             }
             Err(_) => eprintln!("error"),
         }
-        terminal.draw(|mut f| ui::draw(&mut f, app));
+        terminal.draw(|mut f| ui::draw(&mut f, app))?;
     }
+    Ok(())
 }

@@ -62,7 +62,11 @@ fn main() -> Result<(), EnzoError> {
                         .takes_value(true),
                 ),
         )
-        .subcommand(App::new("todos").about("Manage your todos"))
+        .subcommand(
+            App::new("todos")
+                .about("Manage your todos")
+                .arg(Arg::with_name("src")),
+        )
         .get_matches();
 
     let res = match matches.subcommand() {
@@ -87,7 +91,13 @@ fn main() -> Result<(), EnzoError> {
             let dst = clone_matches.value_of("dst").unwrap();
             enzo::clone(&mut config, src, dst)
         }
-        ("todos", _) => enzo::start_task_manager(&mut config),
+        ("todos", todos_matches) => {
+            if let Some(matches) = todos_matches {
+                enzo::start_task_manager(&mut config, matches.value_of("src"))
+            } else {
+                enzo::start_task_manager(&mut config, None)
+            }
+        }
         _ => unreachable!(),
     };
     if let Err(e) = res {
