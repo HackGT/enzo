@@ -3,13 +3,14 @@ use crate::{
     todos::todo::Todo,
     utils::error::{EnzoError, EnzoErrorKind},
 };
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, fs::File, io::prelude::*, path::PathBuf};
+use std::{fs::File, io::prelude::*, path::PathBuf};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProjectConfig {
     pub todos: Option<Vec<Todo>>,
-    pub configure: Option<HashMap<Section, Vec<Instruction>>>,
+    pub configure: Option<IndexMap<Section, Vec<Instruction>>>,
 }
 
 impl ProjectConfig {

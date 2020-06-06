@@ -18,3 +18,4 @@ crossterm = { version = "0.17", features = ['event-stream'] }
 tui = { version = "0.9", default-features = false, features = ['crossterm'] }
 tokio = { version = "0.2", features = ["full"] }
 futures = "0.3"
+indexmap = { version = "1.4.0", features = ['serde-1'] }

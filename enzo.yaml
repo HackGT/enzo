@@ -7,8 +7,15 @@ todos:
 configure:
     section-1:
         - ask:
-            question: What is your name?
-            answer: $name
+            question: question 1
+            answer: $answer_1
         - ask:
-            question: What is not your name?
-            answer: $not_name
+            question: question 2
+            answer: $answer_2
+        - run:
+            - echo $answer_1
+            - curl https://icanhazdadjoke.com/ 
+    section-2:
+        - ask:
+            question: question 3
+            answer: $answer_3

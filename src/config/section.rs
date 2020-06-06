@@ -3,6 +3,7 @@ use crate::utils::{
     query::{AnswerKind, Question},
 };
 use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, process::Command};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct Section(String);
@@ -24,27 +25,57 @@ pub enum Instruction {
 }
 
 pub fn execute(instructions: &Vec<Instruction>) -> Result<(), EnzoError> {
+    let mut answers = HashMap::new();
     for instruction in instructions {
-        execute_instruction(instruction)?;
+        execute_instruction(instruction, &mut answers)?;
     }
     Ok(())
 }
 
 // TODO remove pub
-pub fn execute_instruction(instruction: &Instruction) -> Result<(), EnzoError> {
+pub fn execute_instruction(
+    instruction: &Instruction,
+    answers: &mut HashMap<String, AnswerKind>,
+) -> Result<(), EnzoError> {
     match instruction {
-        Instruction::Ask { question, .. } => {
+        Instruction::Ask {
+            question, answer, ..
+        } => {
             let question = Question {
                 question: &question,
                 default: None,
                 hints: None,
                 prefill: None,
             };
-            let mut answer = AnswerKind::Single(String::new());
-            question.ask(&mut answer);
-            println!("The answer is {:#?}", answer);
+            let mut answer_kind = AnswerKind::Single(String::new());
+            question.ask(&mut answer_kind);
+            answers.insert(answer.to_string(), answer_kind);
         }
-        _ => unimplemented!(),
+        Instruction::Run(commands) => {
+            // TODO clean this up
+            // TODO make it more robust with better error handling
+            for command in commands {
+                let mut it = command.split(" ");
+                let cmd = it.next().unwrap();
+                let mut args = vec![];
+                for arg in it {
+                    if arg.starts_with("$") {
+                        if let Some(val) = answers.get(arg) {
+                            match val {
+                                AnswerKind::Single(s) => args.push(s.as_str()),
+                                _ => args.push(arg),
+                            }
+                        } else {
+                            args.push(arg);
+                        }
+                    } else {
+                        args.push(arg);
+                    }
+                }
+                Command::new(cmd).args(&args).status()?;
+            }
+        }
+        _ => {}
     }
     Ok(())
 }
