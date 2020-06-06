@@ -56,6 +56,7 @@ pub enum EnzoErrorKind {
     GitError,
     ParseError,
     TerminalError,
+    PathDoesNotExist,
 }
 
 impl fmt::Display for EnzoErrorKind {
@@ -67,6 +68,7 @@ impl fmt::Display for EnzoErrorKind {
             EnzoErrorKind::GitError => Purple.bold().paint("git error"),
             EnzoErrorKind::ParseError => Purple.bold().paint("parse error"),
             EnzoErrorKind::TerminalError => Purple.bold().paint("terminal error"),
+            EnzoErrorKind::PathDoesNotExist => Purple.bold().paint("path error"),
         };
 
         write!(f, "{}", msg)

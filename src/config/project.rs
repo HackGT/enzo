@@ -1,23 +1,41 @@
-use crate::todos::todo::Todo;
-use crate::utils::error::EnzoError;
+use super::section::{self, Instruction, Section};
+use crate::{
+    todos::todo::Todo,
+    utils::error::{EnzoError, EnzoErrorKind},
+};
 use serde::{Deserialize, Serialize};
-use std::fs::File;
-use std::io::prelude::*;
-use std::path::PathBuf;
+use std::{collections::HashMap, fs::File, io::prelude::*, path::PathBuf};
 
-// TODO: Remove this nasty read function, and make this not in charge of file io
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProjectConfig {
-    pub todos: Vec<Todo>,
+    pub todos: Option<Vec<Todo>>,
+    pub configure: Option<HashMap<Section, Vec<Instruction>>>,
 }
 
 impl ProjectConfig {
-    pub fn read(&mut self, path: &PathBuf) -> Result<(), EnzoError> {
-        let mut file = File::open(path)?;
-        let mut buffer = String::new();
-        file.read_to_string(&mut buffer)?;
-        let ProjectConfig { ref todos, .. } = serde_yaml::from_str(buffer.as_str())?;
-        self.todos = todos.clone();
+    pub fn configure(&self) -> Result<(), EnzoError> {
+        if let Some(ref mapping) = self.configure {
+            for (section, instructions) in mapping.iter() {
+                println!("Executing section {:?}", section);
+                section::execute(instructions)?;
+            }
+        }
         Ok(())
     }
+}
+
+pub fn read_from(path: &PathBuf) -> Result<ProjectConfig, EnzoError> {
+    if !path.exists() {
+        return Err(EnzoError::new(
+            format!("The path {:?} does not exist", path),
+            EnzoErrorKind::PathDoesNotExist,
+        ));
+    }
+
+    let mut file = File::open(path)?;
+    let mut buffer = String::new();
+    file.read_to_string(&mut buffer)?;
+
+    let project_config = serde_yaml::from_str(&buffer)?;
+    Ok(project_config)
 }

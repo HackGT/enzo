@@ -4,7 +4,10 @@ mod todos;
 pub mod utils;
 pub mod workspace;
 
-use config::global::Config;
+use config::{
+    global::Config,
+    section::{self, Instruction},
+};
 use std::path::PathBuf;
 use utils::error::{EnzoError, EnzoErrorKind};
 use workspace::{project::Project, WorkspaceName};
@@ -64,9 +67,31 @@ pub fn start_task_manager<'a>(config: &'a mut Config, src: Option<&str>) -> Resu
     } else {
         std::env::current_dir()?
     };
-    let project = config.get_project_mut(&path).unwrap();
+    let project = match config.get_project_mut(&path) {
+        Some(project) => project,
+        None => {
+            return Err(EnzoError::new(
+                format!("The project at {:?} does not exist", path),
+                EnzoErrorKind::IOError,
+            ))
+        }
+    };
     let todos = &mut project.todos;
     todos::start(todos)?;
+    Ok(())
+}
+
+pub fn configure(config: &mut Config, src: Option<&str>) -> Result<(), EnzoError> {
+    let mut path = if let Some(src) = src {
+        let (_, dst) = resolve_dst(config, src)?;
+        utils::info(format!("src = {:?}", dst));
+        dst
+    } else {
+        std::env::current_dir()?
+    };
+    path.push("enzo.yaml");
+    let project_config = config::project::read_from(&path)?;
+    project_config.configure()?;
     Ok(())
 }
 

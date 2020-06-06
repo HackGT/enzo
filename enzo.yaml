@@ -1,5 +1,14 @@
 todos:
-    - Task 1
-    - Task 2
-    - Task 3
-    - Task 4
+    - name: Task 1
+    - name: Task 2
+    - name: Task 3
+    - name: Task 4
+
+configure:
+    section-1:
+        - ask:
+            question: What is your name?
+            answer: $name
+        - ask:
+            question: What is not your name?
+            answer: $not_name

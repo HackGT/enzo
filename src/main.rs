@@ -67,6 +67,11 @@ fn main() -> Result<(), EnzoError> {
                 .about("Manage your todos")
                 .arg(Arg::with_name("src")),
         )
+        .subcommand(
+            App::new("configure")
+                .about("TODO")
+                .arg(Arg::with_name("src")),
+        )
         .get_matches();
 
     let res = match matches.subcommand() {
@@ -98,6 +103,7 @@ fn main() -> Result<(), EnzoError> {
                 enzo::start_task_manager(&mut config, None)
             }
         }
+        ("configure", _) => enzo::configure(&mut config, None),
         _ => unreachable!(),
     };
     if let Err(e) = res {

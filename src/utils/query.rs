@@ -1,11 +1,21 @@
 use ansi_term::Color::{Green, White, Yellow};
-use std::fmt;
+use read_input::prelude::*;
+use std::{collections::HashMap, fmt};
 
 pub struct Question<'a> {
-    question: &'a str,
-    default: Option<&'a str>,
-    prefill: Option<&'a str>,
-    hints: Option<Vec<&'a str>>,
+    pub question: &'a str,
+    pub default: Option<&'a str>,
+    pub prefill: Option<&'a str>,
+    pub hints: Option<Vec<&'a str>>,
+}
+
+#[derive(Debug)]
+pub enum AnswerKind {
+    Single(String),
+    Multiple(Vec<String>),
+    KeyValueSingle((String, String)),
+    KeyValueMultiple(HashMap<String, String>),
+    BinaryOption(bool),
 }
 
 impl<'a> Question<'a> {
@@ -32,8 +42,15 @@ impl<'a> Question<'a> {
         }
     }
 
-    pub fn query(&self) -> String {
-        String::new()
+    pub fn ask(&self, answer: &mut AnswerKind) {
+        match answer {
+            AnswerKind::Single(ref mut s) => {
+                let q = self.to_string();
+                let answer = input::<String>().msg(q).get();
+                *s = answer;
+            }
+            _ => unimplemented!(),
+        }
     }
 }
 

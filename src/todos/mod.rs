@@ -41,15 +41,16 @@ pub fn start<'a>(todos: &'a mut Vec<Todo>) -> Result<(), EnzoError> {
 pub fn read_from(path: &PathBuf) -> Result<Vec<Todo>, EnzoError> {
     if !path.exists() {
         return Err(EnzoError::new(
-            format!("{:?} does not exist", path),
-            EnzoErrorKind::IOError,
+            format!("The path {:?} does not exist", path),
+            EnzoErrorKind::PathDoesNotExist,
         ));
     }
     let mut file = File::open(path)?;
     let mut buffer = String::new();
     file.read_to_string(&mut buffer)?;
     let ProjectConfig { todos, .. } = serde_yaml::from_str(buffer.as_str())?;
-    Ok(todos)
+    // TODO remove the unwrap
+    Ok(todos.unwrap())
 }
 
 async fn event_listener<T: Backend>(
