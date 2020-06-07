@@ -41,4 +41,9 @@ impl<'a> App<'a> {
         };
         self.state.select(Some(i));
     }
+
+    pub fn current(&self) -> &Todo {
+        let i = self.state.selected().unwrap_or(0);
+        &self.todos.get(i).unwrap()
+    }
 }

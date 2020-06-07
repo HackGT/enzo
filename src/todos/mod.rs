@@ -28,6 +28,7 @@ pub fn start<'a>(todos: &'a mut Vec<Todo>) -> Result<(), EnzoError> {
 
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
+    terminal.hide_cursor()?;
     terminal.clear()?;
 
     let mut app = App::with_todos(todos);

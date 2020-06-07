@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Todo {
     pub name: String,
-    description: Option<String>,
+    pub description: Option<String>,
     #[serde(default)]
-    completed: Option<bool>,
+    pub completed: Option<bool>,
 }
 
 impl Todo {
@@ -25,3 +25,4 @@ impl Todo {
         self.completed = Some(false);
     }
 }
+
