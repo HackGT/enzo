@@ -4,10 +4,7 @@ mod todos;
 pub mod utils;
 pub mod workspace;
 
-use config::{
-    global::Config,
-    section::{self, Instruction},
-};
+use config::global::Config;
 use std::path::PathBuf;
 use utils::error::{EnzoError, EnzoErrorKind};
 use workspace::{project::Project, WorkspaceName};
@@ -91,6 +88,7 @@ pub fn configure(config: &mut Config, src: Option<&str>) -> Result<(), EnzoError
     };
     path.push("enzo.yaml");
     let project_config = config::project::read_from(&path)?;
+    std::env::set_var("repo", std::env::current_dir()?);
     project_config.configure()?;
     Ok(())
 }

@@ -1,5 +1,6 @@
 use ansi_term::Color::{Green, White, Yellow};
 use read_input::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt};
 
 pub struct Question<'a> {
@@ -9,7 +10,8 @@ pub struct Question<'a> {
     pub hints: Option<Vec<&'a str>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum AnswerKind {
     Single(String),
     Multiple(Vec<String>),
