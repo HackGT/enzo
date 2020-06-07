@@ -4,10 +4,10 @@ use crate::utils::{
 };
 use handlebars::Handlebars;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, env, fs::File, io::prelude::*, path::PathBuf, process::Command};
+use std::{collections::HashMap, fs::File, io::prelude::*, path::PathBuf, process::Command};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
-pub struct Section(String);
+pub struct Section(pub String);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -20,34 +20,42 @@ pub enum Instruction {
     },
     Run(Vec<String>),
     Pipe {
-        template: PathBuf,
+        template: String,
         output: String,
     },
 }
 
-pub fn execute(instructions: &Vec<Instruction>) -> Result<(), EnzoError> {
+#[derive(Debug)]
+pub struct ExecutionContext {
+    pub repo: PathBuf,
+    pub curr: PathBuf,
+    pub remote: String,
+}
+
+pub fn execute(instructions: &Vec<Instruction>, ctx: &ExecutionContext) -> Result<(), EnzoError> {
     let mut answers = HashMap::new();
-    if let Some((_, v)) = env::vars().find(|(k, _)| k == "repo") {
-        answers.insert("$repo".to_string(), AnswerKind::Single(v));
-    }
+    answers.insert("remote".into(), AnswerKind::Single(ctx.remote.clone()));
     for instruction in instructions {
-        execute_instruction(instruction, &mut answers)?;
+        execute_instruction(instruction, &mut answers, ctx)?;
     }
     Ok(())
 }
 
-// TODO remove pub
 fn execute_instruction(
     instruction: &Instruction,
     answers: &mut HashMap<String, AnswerKind>,
+    ctx: &ExecutionContext,
 ) -> Result<(), EnzoError> {
     match instruction {
         Instruction::Ask {
-            question, answer, ..
+            question,
+            answer,
+            default,
+            ..
         } => {
             let question = Question {
                 question: &question,
-                default: None,
+                default: default.as_ref().map(|i| i.as_str()),
                 hints: None,
                 prefill: None,
             };
@@ -56,28 +64,18 @@ fn execute_instruction(
             answers.insert(answer.to_string(), answer_kind);
         }
         Instruction::Run(commands) => {
-            // TODO clean this up
-            // TODO make it more robust with better error handling
             for command in commands {
-                let mut it = command.split(" ");
-                let cmd = it.next().unwrap();
-                let mut args = vec![];
-                for arg in it {
-                    if let Some(val) = answers.get(arg) {
-                        match val {
-                            AnswerKind::Single(s) => args.push(s.as_str()),
-                            _ => args.push(arg),
-                        }
-                    } else {
-                        args.push(arg);
-                    }
-                }
-                Command::new(cmd).args(&args).status()?;
+                println!(
+                    "$ {}",
+                    ansi_term::Color::White.dimmed().paint(command.clone())
+                );
+                run_command(command, answers, ctx)?;
             }
         }
         Instruction::Pipe { template, output } => {
             let handlebars = Handlebars::new();
-            let mut file = File::open(template)?;
+
+            let mut file = File::open(process_arg(template, answers, ctx))?;
             let mut buffer = String::new();
             file.read_to_string(&mut buffer)?;
 
@@ -86,15 +84,38 @@ fn execute_instruction(
                 Err(e) => return Err(EnzoError::new(format!("{}", e), EnzoErrorKind::FatalError)),
             };
 
-            let mut output = output.clone();
-            if let Some(AnswerKind::Single(val)) = answers.get("$repo") {
-                output = output.replace("$repo", val);
-            }
-
-            let path = PathBuf::from(output);
-            let mut file = File::create(&path)?;
+            let mut file = File::create(process_arg(output, answers, ctx))?;
             file.write_all(out.as_bytes())?;
         }
     }
     Ok(())
+}
+
+fn run_command(
+    command: &String,
+    answers: &HashMap<String, AnswerKind>,
+    ctx: &ExecutionContext,
+) -> Result<(), EnzoError> {
+    let mut it = command.split(" ");
+    let cmd = process_arg(it.next().unwrap(), answers, ctx);
+    let mut args = vec![];
+
+    for arg in it {
+        args.push(process_arg(&arg, answers, ctx));
+    }
+
+    Command::new(cmd).args(&args).status()?;
+    Ok(())
+}
+
+fn process_arg(arg: &str, answers: &HashMap<String, AnswerKind>, ctx: &ExecutionContext) -> String {
+    if let Some(kind) = answers.get(arg) {
+        match kind {
+            AnswerKind::Single(val) => val.clone(),
+            _ => unimplemented!(),
+        }
+    } else {
+        arg.replace("$repo", ctx.repo.to_str().unwrap())
+            .replace("$curr", ctx.curr.to_str().unwrap())
+    }
 }

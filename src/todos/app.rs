@@ -2,7 +2,7 @@ use crate::todos::Todo;
 use tui::widgets::ListState;
 
 pub struct App<'a> {
-    pub todos: &'a Vec<Todo>,
+    pub todos: &'a mut Vec<Todo>,
     pub state: ListState,
 }
 
@@ -45,5 +45,10 @@ impl<'a> App<'a> {
     pub fn current(&self) -> &Todo {
         let i = self.state.selected().unwrap_or(0);
         &self.todos.get(i).unwrap()
+    }
+
+    pub fn current_mut(&mut self) -> &mut Todo {
+        let i = self.state.selected().unwrap_or(0);
+        self.todos.get_mut(i).unwrap()
     }
 }

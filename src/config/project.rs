@@ -1,4 +1,4 @@
-use super::section::{self, Instruction, Section};
+use super::section::{self, ExecutionContext, Instruction, Section};
 use crate::{
     todos::todo::Todo,
     utils::error::{EnzoError, EnzoErrorKind},
@@ -14,11 +14,15 @@ pub struct ProjectConfig {
 }
 
 impl ProjectConfig {
-    pub fn configure(&self) -> Result<(), EnzoError> {
+    pub fn configure(&self, ctx: &ExecutionContext) -> Result<(), EnzoError> {
         if let Some(ref mapping) = self.configure {
             for (section, instructions) in mapping.iter() {
-                println!("Executing section {:?}", section);
-                section::execute(instructions)?;
+                println!(
+                    "{} {}",
+                    ansi_term::Color::White.dimmed().paint("executing section"),
+                    ansi_term::Color::Purple.bold().paint(section.0.clone())
+                );
+                section::execute(instructions, ctx)?;
             }
         }
         Ok(())

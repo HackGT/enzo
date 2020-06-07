@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Project {
     name: String,
-    src: String,
+    pub src: String,
     workspace: WorkspaceName,
     pub todos: Vec<Todo>,
 }

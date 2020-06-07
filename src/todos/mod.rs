@@ -2,8 +2,13 @@ pub mod app;
 pub mod todo;
 mod ui;
 
-use crate::config::project::ProjectConfig;
-use crate::utils::error::{EnzoError, EnzoErrorKind};
+use crate::{
+    config::project::ProjectConfig,
+    utils::{
+        error::{EnzoError, EnzoErrorKind},
+        query::{AnswerKind, Question},
+    },
+};
 use app::App;
 use crossterm::{
     event::{EnableMouseCapture, Event, EventStream, KeyCode},
@@ -11,10 +16,11 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen},
 };
 use futures::{executor::block_on, StreamExt};
-use std::fs::File;
-use std::io::prelude::*;
-use std::io::{stdout, Write};
-use std::path::PathBuf;
+use std::{
+    fs::File,
+    io::{prelude::*, stdout, Write},
+    path::PathBuf,
+};
 use todo::Todo;
 use tui::{
     backend::{Backend, CrosstermBackend},
@@ -32,6 +38,7 @@ pub fn start<'a>(todos: &'a mut Vec<Todo>) -> Result<(), EnzoError> {
     terminal.clear()?;
 
     let mut app = App::with_todos(todos);
+    app.state.select(Some(0));
 
     block_on(event_listener(&mut terminal, &mut app))?;
 
@@ -63,17 +70,26 @@ async fn event_listener<T: Backend>(
     terminal.draw(|mut f| ui::draw(&mut f, app))?;
     while let Some(event) = reader.next().await {
         match event {
-            Ok(event) => {
-                if event == Event::Key(KeyCode::Char('q').into()) {
-                    break;
-                } else if event == Event::Key(KeyCode::Down.into()) {
-                    app.next();
-                } else if event == Event::Key(KeyCode::Up.into()) {
-                    app.previous();
-                } else {
-                    println!("this is an event\r");
+            Ok(event) => match event {
+                Event::Key(k) => {
+                    if k == KeyCode::Char('q').into() {
+                        break;
+                    } else if k == KeyCode::Char('j').into() || k == KeyCode::Down.into() {
+                        app.next();
+                    } else if k == KeyCode::Char('k').into() || k == KeyCode::Up.into() {
+                        app.previous();
+                    } else if k == KeyCode::Enter.into() {
+                        if app.current().is_complete() {
+                            app.current_mut().mark_incomplete();
+                        } else {
+                            app.current_mut().mark_complete();
+                        }
+                    } else {
+                        // TODO
+                    }
                 }
-            }
+                _ => break,
+            },
             Err(_) => eprintln!("error"),
         }
         terminal.draw(|mut f| ui::draw(&mut f, app))?;

@@ -4,9 +4,11 @@ mod todos;
 pub mod utils;
 pub mod workspace;
 
-use config::global::Config;
+use config::{global::Config, section::ExecutionContext};
+use std::fs;
 use std::path::PathBuf;
 use utils::error::{EnzoError, EnzoErrorKind};
+use utils::query::{AnswerKind, Question};
 use workspace::{project::Project, WorkspaceName};
 
 pub fn resolve_src(src: &str) -> Result<String, EnzoError> {
@@ -25,15 +27,24 @@ pub fn resolve_dst(config: &mut Config, dst: &str) -> Result<(WorkspaceName, Pat
     }
 }
 
-pub fn clone(config: &mut Config, src: &str, dst: &str) -> Result<(), EnzoError> {
-    let repo_name = match get_repo_name(&src) {
-        Some(name) => name,
-        None => {
-            let msg = format!(
-                "Expected `src` to be of the form <username>/<repo_name>. Found: {}",
-                src
-            );
-            return Err(EnzoError::new(msg, EnzoErrorKind::FatalError));
+pub fn clone(
+    config: &mut Config,
+    src: &str,
+    dst: &str,
+    name: Option<String>,
+) -> Result<(), EnzoError> {
+    let repo_name = if let Some(name) = name {
+        name
+    } else {
+        match get_repo_name(&src) {
+            Some(name) => name.to_string(),
+            None => {
+                let msg = format!(
+                    "Expected `src` to be of the form <username>/<repo_name>. Found: {}",
+                    src
+                );
+                return Err(EnzoError::new(msg, EnzoErrorKind::FatalError));
+            }
         }
     };
     let src = resolve_src(src)?;
@@ -50,9 +61,27 @@ pub fn clone(config: &mut Config, src: &str, dst: &str) -> Result<(), EnzoError>
     // TODO handle error more gracefully
     let name = dst.file_name().unwrap();
     let project = Project::new(name.to_str().unwrap().into(), workspace_name, src, todos);
-
     config.add_project(dst, project);
+    Ok(())
+}
 
+// TODO clean up
+pub fn new(config: &mut Config, src: &str, dst: &str) -> Result<(), EnzoError> {
+    let question = Question::new_question("What is the name of your project?");
+    let mut answer_kind = AnswerKind::Single(String::new());
+    question.ask(&mut answer_kind);
+    let name = match answer_kind {
+        AnswerKind::Single(s) => s.clone(),
+        _ => unreachable!(),
+    };
+    clone(config, src, dst, Some(name.clone()))?;
+
+    let (_, mut dst) = resolve_dst(config, dst)?;
+    dst.push(name);
+    dst.push(".git");
+    fs::remove_dir_all(&dst)?;
+    dst.pop();
+    git::init(&dst)?;
     Ok(())
 }
 
@@ -86,44 +115,26 @@ pub fn configure(config: &mut Config, src: Option<&str>) -> Result<(), EnzoError
     } else {
         std::env::current_dir()?
     };
+
+    // TODO get remote from project
+
+    let ctx = &ExecutionContext {
+        repo: std::env::current_dir()?,
+        curr: path.clone(),
+        remote: String::from("testing"),
+    };
+
     path.push("enzo.yaml");
     let project_config = config::project::read_from(&path)?;
-    std::env::set_var("repo", std::env::current_dir()?);
-    project_config.configure()?;
+    project_config.configure(ctx)?;
     Ok(())
 }
 
-// fn read_name_from_stdin() -> Result<String, EnzoError> {
-//     let name = input::<String>()
-//         .msg(format!("{}", Question::new_question("Name of the repo")))
-//         .get();
-//     Ok(name)
-// }
-//
-// fn name_helper<'a>(
-//     src: &str,
-//     user_provided_name: Option<&str>,
-//     read_from_stdin: bool,
-// ) -> Result<String, EnzoError> {
-//     let name = match user_provided_name {
-//         Some(name) => name.to_string(),
-//         None => {
-//             if read_from_stdin {
-//                 read_name_from_stdin()?
-//             } else {
-//                 match get_repo_name(&src) {
-//                     Some(name) => name.to_string(),
-//                     None => return Err(EnzoError::new(format!(
-//                         "Failed to parse name of the repo from '{}'. It should be of the format 'username/repo_name'", src),
-//                         EnzoErrorKind::GitError,
-//                     )),
-//                 }
-//             }
-//         }
-//     };
-//
-//     Ok(name)
-// }
+pub fn deploy(config: &mut Config, src: Option<&str>) -> Result<(), EnzoError> {
+    // TODO look for deployment source in project config file
+    configure(config, src)?;
+    Ok(())
+}
 
 fn get_repo_name<'a>(src: &'a str) -> Option<&'a str> {
     match src.rfind("/") {

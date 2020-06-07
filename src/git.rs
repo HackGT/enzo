@@ -1,6 +1,6 @@
 use crate::utils;
 use crate::utils::error::{EnzoError, EnzoErrorKind};
-use git2::{build::RepoBuilder, Cred, FetchOptions, RemoteCallbacks};
+use git2::{build::RepoBuilder, Cred, FetchOptions, RemoteCallbacks, Repository};
 use std::io::Write;
 use std::path::Path;
 use std::process::{Command, Stdio};
@@ -38,7 +38,9 @@ pub fn clone(src: &str, dst: &Path) -> Result<(), EnzoError> {
     }
 }
 
-pub fn _init(_target: &Path) -> Result<(), EnzoError> {
+// TODO clean up
+pub fn init(target: &Path) -> Result<(), EnzoError> {
+    Repository::init(target).unwrap();
     Ok(())
 }
 

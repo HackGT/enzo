@@ -10,15 +10,12 @@ use std::fs::File;
 use std::io::prelude::*;
 
 fn main() -> Result<(), EnzoError> {
-    // read the config file
-    //
-    // if it doesn't exist, use the methods from the library to create one
-    //
     let mut config = read_config()?;
 
     let matches = App::new("enzo")
         .version("0.0.1")
         .about("Workspace and repo management made fun ;)")
+        .arg(Arg::with_name("workspace"))
         .subcommand(
             App::new("add")
                 .about("add a `workspace` or a `task`")
@@ -72,7 +69,21 @@ fn main() -> Result<(), EnzoError> {
                 .about("TODO")
                 .arg(Arg::with_name("src")),
         )
+        .subcommand(
+            App::new("deploy").about("TODO").arg(
+                Arg::with_name("template")
+                    .long("template")
+                    .short("t")
+                    .takes_value(true),
+            ),
+        )
         .get_matches();
+
+    if let Some(name) = matches.value_of("workspace") {
+        let (_, path) = enzo::resolve_dst(&mut config, name)?;
+        println!("{}", path.to_str().unwrap());
+        return Ok(());
+    }
 
     let res = match matches.subcommand() {
         ("add", Some(add_matches)) => match add_matches.value_of("entity") {
@@ -94,7 +105,12 @@ fn main() -> Result<(), EnzoError> {
         ("clone", Some(clone_matches)) => {
             let src = clone_matches.value_of("src").unwrap();
             let dst = clone_matches.value_of("dst").unwrap();
-            enzo::clone(&mut config, src, dst)
+            enzo::clone(&mut config, src, dst, None)
+        }
+        ("new", Some(clone_matches)) => {
+            let src = clone_matches.value_of("src").unwrap();
+            let dst = clone_matches.value_of("dst").unwrap();
+            enzo::new(&mut config, src, dst)
         }
         ("todos", todos_matches) => {
             if let Some(matches) = todos_matches {
@@ -104,6 +120,13 @@ fn main() -> Result<(), EnzoError> {
             }
         }
         ("configure", _) => enzo::configure(&mut config, None),
+        ("deploy", deploy_matches) => {
+            if let Some(matches) = deploy_matches {
+                enzo::deploy(&mut config, matches.value_of("template"))
+            } else {
+                enzo::deploy(&mut config, None)
+            }
+        }
         _ => unreachable!(),
     };
     if let Err(e) = res {

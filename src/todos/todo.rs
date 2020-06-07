@@ -24,5 +24,12 @@ impl Todo {
     pub fn mark_incomplete(&mut self) {
         self.completed = Some(false);
     }
-}
 
+    pub fn is_complete(&self) -> bool {
+        if let Some(val) = self.completed {
+            val
+        } else {
+            false
+        }
+    }
+}
