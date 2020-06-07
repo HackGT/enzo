@@ -1,0 +1,7 @@
+todos:
+    - title: Task 1
+      description: This task requires some thinking
+    - title: Task 2
+      description: This task does not require too much
+    - title: Task 3
+      description: This is the third task
