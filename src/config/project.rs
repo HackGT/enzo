@@ -19,7 +19,7 @@ impl ProjectConfig {
             for (section, instructions) in mapping.iter() {
                 println!(
                     "{} {}",
-                    ansi_term::Color::White.dimmed().paint("executing section"),
+                    ansi_term::Color::White.bold().paint("executing section"),
                     ansi_term::Color::Purple.bold().paint(section.0.clone())
                 );
                 section::execute(instructions, ctx)?;
