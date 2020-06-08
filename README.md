@@ -2,18 +2,21 @@
 
 Workspace and repo management made fun ;)
 
-**this is experimental, not ready for use yet**
+## What is enzo?
 
-## Commands
+## Why did you make it?
 
-```
-enzo clone <src> <dst> [--name=<new-name>]
-```
-Clones the repo in `<src>` into the workspace `<dst>`. `<src>` is of the form `username/repo_name`. host = github.com; protocol = https;
+## Concepts
 
-```
-enzo new <src> <dst> [--name=<new-name>]
-```
-Creates a new repo from the repo in `<src>` into the workspace `<dst>`. `<src>` is of the form `username/repo_name`. host = github.com; protocol = https;
-User will be prompted to provide a name if no name is provided.
+## Usage
+
+### Using enzo to manage your notes
+
+### Using enzo to stay on top of your projects
+
+### Using enzo to automate deployments
+
+## Authoring enzo.yaml files
+
+## Contributing
 
