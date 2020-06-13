@@ -51,12 +51,19 @@ fn execute_instruction(
             question,
             answer,
             default,
-            ..
+            hints,
         } => {
+            // TODO better way to convert from Option<Vec<String>> to Option<Vec<&str>>
+            let mut hints_str = vec![];
+            if let Some(inner) = hints {
+                inner.iter().for_each(|s| {
+                    hints_str.push(s.as_str());
+                });
+            };
             let question = Question {
                 question: &question,
                 default: default.as_ref().map(|i| i.as_str()),
-                hints: None,
+                hints: Some(hints_str),
                 prefill: None,
             };
             let mut answer_kind = AnswerKind::Single(String::new());
